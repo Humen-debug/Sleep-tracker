@@ -40,8 +40,9 @@ class _MainPageState extends State<MainPage> {
                     ),
                   )
                   .toList()),
-          body: SafeArea(child: Padding(padding: const EdgeInsets.only(bottom: 40), child: child)),
+          body: SafeArea(child: child),
           extendBody: true,
+          backgroundColor: Colors.transparent,
         );
       },
     );

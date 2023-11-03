@@ -12,9 +12,27 @@ const errorColor = Color(0xffcf3c0e);
 const containerColor = Color(0xff082847);
 const cursorColor = Style.grey1;
 
+const _defaultTextTheme = TextTheme(
+  bodySmall: TextStyle(fontSize: 12, height: 16 / 12),
+  bodyMedium: TextStyle(fontSize: 14, height: 20 / 14),
+  bodyLarge: TextStyle(fontSize: 16, height: 24 / 16),
+  labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, height: 16 / 11),
+  labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, height: 16 / 12),
+  labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 20 / 14),
+  titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 20 / 14),
+  titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, height: 24 / 16),
+  titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w500, height: 28 / 22),
+  headlineSmall: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, height: 32 / 20),
+  headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, height: 36 / 24),
+  headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w600, height: 40 / 32),
+  displaySmall: TextStyle(fontSize: 36, height: 44 / 36),
+  displayMedium: TextStyle(fontSize: 45, height: 52 / 45),
+  displayLarge: TextStyle(fontSize: 57, height: 64 / 57),
+);
+
 // Default font list: https://api.flutter.dev/flutter/material/TextTheme-class.html
-TextTheme textTheme = GoogleFonts.quicksandTextTheme(const TextTheme(headlineSmall: TextStyle(fontSize: 20)));
-TextTheme dataTextTheme = GoogleFonts.robotoTextTheme(const TextTheme(headlineSmall: TextStyle(fontSize: 20)));
+TextTheme textTheme = GoogleFonts.quicksandTextTheme(_defaultTextTheme);
+TextTheme dataTextTheme = GoogleFonts.robotoTextTheme(_defaultTextTheme);
 
 TextSelectionThemeData textSelectionTheme = const TextSelectionThemeData(cursorColor: cursorColor);
 
@@ -87,6 +105,15 @@ SwitchThemeData switchTheme = SwitchThemeData(thumbColor: MaterialStateProperty.
   return Style.grey3;
 }));
 
+SliderThemeData sliderTheme = SliderThemeData(
+  showValueIndicator: ShowValueIndicator.always,
+  inactiveTickMarkColor: tertiaryColor,
+  activeTrackColor: primaryColor,
+  thumbColor: Colors.white,
+  valueIndicatorColor: tertiaryColor,
+  valueIndicatorTextStyle: textTheme.bodySmall?.copyWith(color: Style.grey1),
+);
+
 CupertinoThemeData cupertinoTheme = const CupertinoThemeData(
   brightness: Brightness.dark,
   primaryColor: primaryColor,
@@ -102,6 +129,7 @@ final ThemeData themeData = ThemeData(
     textButtonTheme: textButtonTheme,
     inputDecorationTheme: inputDecorationTheme,
     switchTheme: switchTheme,
+    sliderTheme: sliderTheme,
     cupertinoOverrideTheme: cupertinoTheme,
     dividerTheme: const DividerThemeData(thickness: 1),
     textTheme: textTheme,
