@@ -40,7 +40,7 @@ class _MainPageState extends State<MainPage> {
                     ),
                   )
                   .toList()),
-          body: child,
+          body: SafeArea(child: Padding(padding: const EdgeInsets.only(bottom: 40), child: child)),
           extendBody: true,
         );
       },

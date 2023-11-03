@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sleep_tracker/utils/style.dart';
@@ -13,6 +14,7 @@ const cursorColor = Style.grey1;
 
 // Default font list: https://api.flutter.dev/flutter/material/TextTheme-class.html
 TextTheme textTheme = GoogleFonts.quicksandTextTheme(const TextTheme(headlineSmall: TextStyle(fontSize: 20)));
+TextTheme dataTextTheme = GoogleFonts.robotoTextTheme(const TextTheme(headlineSmall: TextStyle(fontSize: 20)));
 
 TextSelectionThemeData textSelectionTheme = const TextSelectionThemeData(cursorColor: cursorColor);
 
@@ -72,6 +74,25 @@ TextButtonThemeData textButtonTheme = TextButtonThemeData(
   textStyle: MaterialStateProperty.all(textTheme.bodyMedium),
 ));
 
+SwitchThemeData switchTheme = SwitchThemeData(thumbColor: MaterialStateProperty.resolveWith<Color>((states) {
+  if (states.contains(MaterialState.selected)) {
+    return Style.grey1;
+  } else {
+    return Style.grey4;
+  }
+}), trackColor: MaterialStateProperty.resolveWith<Color>((states) {
+  if (states.contains(MaterialState.selected)) {
+    return primaryColor;
+  }
+  return Style.grey3;
+}));
+
+CupertinoThemeData cupertinoTheme = const CupertinoThemeData(
+  brightness: Brightness.dark,
+  primaryColor: primaryColor,
+  scaffoldBackgroundColor: backgroundColor,
+);
+
 final ThemeData themeData = ThemeData(
     brightness: Brightness.dark,
     primaryColor: primaryColor,
@@ -80,6 +101,8 @@ final ThemeData themeData = ThemeData(
     outlinedButtonTheme: outlinedButtonTheme,
     textButtonTheme: textButtonTheme,
     inputDecorationTheme: inputDecorationTheme,
+    switchTheme: switchTheme,
+    cupertinoOverrideTheme: cupertinoTheme,
     dividerTheme: const DividerThemeData(thickness: 1),
     textTheme: textTheme,
     textSelectionTheme: textSelectionTheme,
