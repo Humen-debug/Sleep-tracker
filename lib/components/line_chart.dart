@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart' as fl;
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class LineChart extends StatelessWidget {
   const LineChart({

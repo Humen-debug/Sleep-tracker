@@ -300,34 +300,36 @@ class _SleepCycleChart extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Sleep Cycle', style: Theme.of(context).textTheme.headlineSmall),
-              ElevatedButton(
-                onPressed: () {},
-                style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
-                      backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                        (states) {
-                          if (states.contains(MaterialState.disabled)) {
-                            return Theme.of(context).colorScheme.tertiary.withOpacity(0.5);
-                          }
-                          return Theme.of(context).colorScheme.tertiary;
-                        },
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 100),
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
+                        backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                          (states) {
+                            if (states.contains(MaterialState.disabled)) {
+                              return Theme.of(context).colorScheme.tertiary.withOpacity(0.5);
+                            }
+                            return Theme.of(context).colorScheme.tertiary;
+                          },
+                        ),
+                        padding: const MaterialStatePropertyAll(
+                            EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingSm)),
                       ),
-                      padding: const MaterialStatePropertyAll(
-                          EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingSm)),
-                    ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'More',
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelLarge
-                          ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: Style.spacingXxs),
-                    SvgPicture.asset('assets/icons/chevron-right.svg',
-                        color: Theme.of(context).primaryColor, width: 16, height: 16)
-                  ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'More',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelLarge
+                            ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                      ),
+                      SvgPicture.asset('assets/icons/chevron-right.svg',
+                          color: Theme.of(context).primaryColor, width: 32, height: 32)
+                    ],
+                  ),
                 ),
               )
             ],

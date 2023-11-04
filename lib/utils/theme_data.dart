@@ -140,6 +140,7 @@ final ThemeData themeData = ThemeData(
     dividerTheme: const DividerThemeData(thickness: 1),
     textTheme: textTheme,
     textSelectionTheme: textSelectionTheme,
+    highlightColor: primaryColor.withOpacity(0.2),
     colorScheme: const ColorScheme.dark(
       primary: primaryColor,
       secondary: secondaryColor,
