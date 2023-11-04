@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -13,7 +12,9 @@ const int _moodBoardColumnCount = DateTime.daysPerWeek;
 const Duration _monthScrollDuration = Duration(milliseconds: 200);
 
 class DailyMood extends StatefulWidget {
-  const DailyMood({super.key});
+  const DailyMood({super.key, required this.firstDate, required this.monthlyMoods});
+  final DateTime firstDate;
+  final List<List<double?>> monthlyMoods;
 
   @override
   State<DailyMood> createState() => _DailyMoodState();
@@ -22,30 +23,18 @@ class DailyMood extends StatefulWidget {
 class _DailyMoodState extends State<DailyMood> {
   final DateTime _now = DateTime.now();
   // dev use
-  late final DateTime firstDate = DateUtils.dateOnly(_now.subtract(const Duration(days: 365)).copyWith(day: 1));
-  late int monthToGenerate = DateUtils.monthDelta(firstDate, _now) + 1;
-  late final List<List<double?>> data = List.generate(monthToGenerate, (index) {
-    int currentMonth = _now.month;
-    int month = (currentMonth - index > 0) ? currentMonth - index : index % monthToGenerate;
-    int year = currentMonth - index <= 0 ? _now.year - 1 : _now.year;
-    return List.generate(
-      DateUtils.getDaysInMonth(year, month),
-      (day) => (index > 0) || day + 1 <= _now.day ? Random().nextDouble() : null,
-    );
-  }).reversed.toList();
-
   DateTime _currentMonth = DateUtils.dateOnly(DateTime.now()).copyWith(day: 1);
 
   late final PageController _pageController =
-      PageController(initialPage: DateUtils.monthDelta(firstDate, _currentMonth));
+      PageController(initialPage: DateUtils.monthDelta(widget.firstDate, _currentMonth));
 
   int get average {
-    int index = DateUtils.monthDelta(firstDate, _currentMonth);
+    int index = DateUtils.monthDelta(widget.firstDate, _currentMonth);
 
-    return (data[index].whereNotNull().average * 100).round();
+    return (widget.monthlyMoods[index].whereNotNull().average * 100).round();
   }
 
-  bool get _isDisplayingFirstMonth => !_currentMonth.isAfter(DateTime(firstDate.year, firstDate.month));
+  bool get _isDisplayingFirstMonth => !_currentMonth.isAfter(DateTime(widget.firstDate.year, widget.firstDate.month));
   bool get _isDisplayingLastMonth => !_currentMonth.isBefore(DateTime(_now.year, _now.month));
 
   void _handlePreviousMonth() {
@@ -67,7 +56,7 @@ class _DailyMoodState extends State<DailyMood> {
   }
 
   void _handleMonthPageChanged(int monthPage) {
-    final DateTime monthDate = DateUtils.addMonthsToMonthDate(firstDate, monthPage);
+    final DateTime monthDate = DateUtils.addMonthsToMonthDate(widget.firstDate, monthPage);
     if (!DateUtils.isSameMonth(_currentMonth, monthDate)) {
       setState(() {
         _currentMonth = DateTime(monthDate.year, monthDate.month);
@@ -78,7 +67,7 @@ class _DailyMoodState extends State<DailyMood> {
   void _handleMonthChanged(DateTime? monthDate) {
     if (monthDate == null) return;
     if (!DateUtils.isSameMonth(_currentMonth, monthDate)) {
-      int index = DateUtils.monthDelta(firstDate, monthDate);
+      int index = DateUtils.monthDelta(widget.firstDate, monthDate);
       _pageController.jumpToPage(index);
       setState(() {
         _currentMonth = DateTime(monthDate.year, monthDate.month);
@@ -87,10 +76,10 @@ class _DailyMoodState extends State<DailyMood> {
   }
 
   Widget _buildItems(BuildContext context, int index) {
-    final DateTime month = DateUtils.addMonthsToMonthDate(firstDate, index);
+    final DateTime month = DateUtils.addMonthsToMonthDate(widget.firstDate, index);
     return _MoodBoard(
       key: ValueKey<DateTime>(month),
-      data: data[index],
+      data: widget.monthlyMoods[index],
       displayedMonth: month,
     );
   }
@@ -130,7 +119,7 @@ class _DailyMoodState extends State<DailyMood> {
                     maxWidth: 100,
                     mode: PeriodPickerMode.months,
                     selectedDate: _currentMonth,
-                    firstDate: firstDate,
+                    firstDate: widget.firstDate,
                     lastDate: _now,
                     onDateChanged: _handleMonthChanged,
                   ),
@@ -152,7 +141,7 @@ class _DailyMoodState extends State<DailyMood> {
             curve: Curves.easeIn,
             child: PageView.builder(
               controller: _pageController,
-              itemCount: monthToGenerate,
+              itemCount: widget.monthlyMoods.length,
               itemBuilder: _buildItems,
               onPageChanged: _handleMonthPageChanged,
             ),
@@ -186,6 +175,7 @@ class _MoodBoard extends StatefulWidget {
 class __MoodBoardState extends State<_MoodBoard> {
   int? _activeIndex;
 
+  /// Generate label for selected date.
   String? get label {
     if (_activeIndex != null) {
       String date = DateFormat.MMMd().format(widget.displayedMonth.copyWith(day: _activeIndex! + 1));
@@ -227,10 +217,14 @@ class __MoodBoardState extends State<_MoodBoard> {
     return Container(
       constraints: BoxConstraints(maxWidth: gridWidth),
       child: GestureDetector(
+        /// Move the indicator to the focused date.
+        ///
+        /// If the focused date is after today, it will not select focused date.
         onLongPressMoveUpdate: (details) {
           int row = (details.localPosition.dy / gridCellSize).floor();
           int col = (details.localPosition.dx / gridCellSize).floor();
           int index = col + row * 7;
+
           int lastDay = DateUtils.isSameMonth(DateTime.now(), widget.displayedMonth)
               ? DateTime.now().day
               : DateUtils.getDaysInMonth(widget.displayedMonth.year, widget.displayedMonth.month);

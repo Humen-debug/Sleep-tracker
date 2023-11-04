@@ -8,8 +8,10 @@ import 'package:intl/intl.dart';
 import 'package:sleep_tracker/components/line_chart.dart';
 import 'package:sleep_tracker/components/moods/daily_mood.dart';
 import 'package:sleep_tracker/components/moods/mood_picker.dart';
+import 'package:sleep_tracker/components/moods/utils.dart';
 import 'package:sleep_tracker/components/sleep_phase_block.dart';
 import 'package:sleep_tracker/components/sleep_timer.dart';
+import 'package:sleep_tracker/utils/string.dart';
 import 'package:sleep_tracker/utils/style.dart';
 import 'package:sleep_tracker/utils/theme_data.dart';
 
@@ -26,15 +28,28 @@ class _HomePageState extends State<HomePage> {
   DateTime startTime = DateTime.now();
   DateTime endTime = DateTime.now().add(const Duration(hours: 8));
   bool alarmOn = true;
+  // dev use
+  final DateTime _now = DateTime.now();
+  late final DateTime firstDate = DateUtils.dateOnly(_now.subtract(const Duration(days: 365)).copyWith(day: 1));
+  late int monthToGenerate = DateUtils.monthDelta(firstDate, _now) + 1;
+  late final List<List<double?>> monthlyMoods = List.generate(monthToGenerate, (index) {
+    int currentMonth = _now.month;
+    int month = (currentMonth - index > 0) ? currentMonth - index : index % monthToGenerate;
+    int year = currentMonth - index <= 0 ? _now.year - 1 : _now.year;
+    return List.generate(
+      DateUtils.getDaysInMonth(year, month),
+      (day) => (index > 0) || day + 1 <= _now.day ? Random().nextDouble() : null,
+    );
+  }).reversed.toList();
 
   late final SleepTimerController _sleepTimerCont = SleepTimerController();
 
   @override
   Widget build(BuildContext context) {
-    Widget divider() => Padding(
-          padding: const EdgeInsets.only(top: Style.spacingXxl, bottom: Style.spacingLg),
-          child: Divider(color: Theme.of(context).colorScheme.tertiary),
-        );
+    Widget divider = Padding(
+      padding: const EdgeInsets.only(top: Style.spacingXxl, bottom: Style.spacingLg),
+      child: Divider(color: Theme.of(context).colorScheme.tertiary),
+    );
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -114,14 +129,19 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            divider(),
+            divider,
             // Mood
-            const MoodPicker(),
-            divider(),
+            _TodayMoodBoard(
+              initialValue: monthlyMoods.last[_now.day - 1],
+              onChanged: (value) => setState(() {
+                monthlyMoods.last[_now.day - 1] = value;
+              }),
+            ),
+            divider,
             const _SleepCycleChart(),
-            divider(),
-            const DailyMood(),
-            divider(),
+            divider,
+            DailyMood(firstDate: firstDate, monthlyMoods: monthlyMoods),
+            divider,
           ],
         ),
       ),
@@ -158,6 +178,108 @@ class _ProfileStatusBar extends StatelessWidget {
               ],
             ),
           )
+        ],
+      ),
+    );
+  }
+}
+
+class _TodayMoodBoard extends StatefulWidget {
+  const _TodayMoodBoard({super.key, this.initialValue, this.onChanged});
+  final double? initialValue;
+  final ValueChanged<double?>? onChanged;
+
+  @override
+  State<_TodayMoodBoard> createState() => __TodayMoodBoardState();
+}
+
+class __TodayMoodBoardState extends State<_TodayMoodBoard> {
+  // dev. It should be fetched from the today's sleeping quality
+  /// the sleeping quality, in range of 0 to 1.
+  late double? _value = widget.initialValue;
+
+  bool isSliding = false;
+
+  void _handleChanged(double? value) {
+    setState(() => _value = value);
+    if (widget.onChanged != null) widget.onChanged!(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Mood? mood = _value != null ? valueToMood(_value!) : null;
+    bool onFocused = (_value == null) || isSliding;
+
+    Widget header = // Header
+        Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(onFocused ? 'How Are You Today?' : 'Today Mood',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
+        if (!onFocused)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 100),
+            child: ElevatedButton(
+              onPressed: () => _handleChanged(null),
+              style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
+                    backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                      (states) {
+                        if (states.contains(MaterialState.disabled)) {
+                          return Theme.of(context).colorScheme.tertiary.withOpacity(0.5);
+                        }
+                        return Theme.of(context).colorScheme.tertiary;
+                      },
+                    ),
+                    padding: const MaterialStatePropertyAll(
+                        EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingSm)),
+                  ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Reset',
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelLarge
+                        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(width: Style.spacingXxs),
+                  SvgPicture.asset(
+                    'assets/icons/reset.svg',
+                    height: 16,
+                    width: 16,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ],
+              ),
+            ),
+          )
+      ],
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Style.spacingMd, 0, Style.spacingMd, Style.spacingXs),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          header,
+          !onFocused
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: Style.spacingSm),
+                    SvgPicture.asset('assets/moods/${mood?.name}.svg', height: 85),
+                    const SizedBox(height: Style.spacingXs),
+                    Text(
+                      mood?.name.capitalize() ?? '',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    )
+                  ],
+                )
+              : MoodPicker(
+                  value: _value,
+                  onChanged: _handleChanged,
+                  onSlide: (v) => setState(() => isSliding = v),
+                )
         ],
       ),
     );
@@ -203,6 +325,8 @@ class _SleepCycleChart extends StatelessWidget {
                           ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(width: Style.spacingXxs),
+                    SvgPicture.asset('assets/icons/chevron-right.svg',
+                        color: Theme.of(context).primaryColor, width: 16, height: 16)
                   ],
                 ),
               )
