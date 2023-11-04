@@ -21,23 +21,23 @@ class PeriodPicker extends StatelessWidget {
         firstDate = DateUtils.dateOnly(firstDate) {
     assert(!this.lastDate.isBefore(this.firstDate),
         'lastDate ${this.lastDate} must be on or after firstDate ${this.firstDate}.');
-    assert(this.selectedDate == null ? true : !this.selectedDate!.isBefore(firstDate),
+    assert(this.selectedDate == null ? true : !this.selectedDate!.isBefore(this.firstDate),
         'selectedDate ${this.selectedDate} must be on or after firstDate ${this.firstDate}.');
     assert(this.selectedDate == null ? true : !this.selectedDate!.isAfter(this.lastDate),
         'selectedDate ${this.selectedDate} must be on or before lastDate ${this.lastDate}.');
     assert(this.selectedRange == null || !this.selectedRange!.start.isBefore(this.firstDate),
-        "selectedRange's start date must be on or after firstDate $firstDate.");
+        "selectedRange's start date must be on or after firstDate ${this.firstDate}.");
     assert(
-      this.selectedRange == null || !this.selectedRange!.end.isBefore(firstDate),
-      "selectedRange's end date must be on or after firstDate $firstDate.",
+      this.selectedRange == null || !(this.selectedRange!).end.isBefore(this.firstDate),
+      "selectedRange's end date must be on or after firstDate ${this.firstDate}.",
     );
     assert(
-      this.selectedRange == null || !this.selectedRange!.start.isAfter(lastDate),
-      "selectedRange's start date must be on or before lastDate $lastDate.",
+      this.selectedRange == null || !(this.selectedRange!).start.isAfter(this.lastDate),
+      "selectedRange's start date must be on or before lastDate {$this.lastDate}.",
     );
     assert(
-      this.selectedRange == null || !this.selectedRange!.end.isAfter(lastDate),
-      "selectedRange's end date must be on or before lastDate $lastDate.",
+      this.selectedRange == null || !this.selectedRange!.end.isAfter(this.lastDate),
+      "selectedRange's end date must be on or before lastDate ${this.lastDate}.",
     );
     assert(!(mode == PeriodPickerMode.weeks && !rangeSelected),
         'weeks mode must contains at least ${DateTime.daysPerWeek} in selection.');
@@ -66,11 +66,13 @@ class PeriodPicker extends StatelessWidget {
         default:
       }
     } else {
+      final DateTime date = selectedDate ?? DateTime.now();
       switch (mode) {
         case PeriodPickerMode.days:
-          return DateFormat.MMMd().format(selectedDate ?? DateTime.now());
+          return DateFormat.MMMd().format(date);
         case PeriodPickerMode.months:
-          return DateFormat.MMM().format(selectedDate ?? DateTime.now());
+          bool isSameYear = date.year == DateTime.now().year;
+          return isSameYear ? DateFormat.MMM().format(date) : DateFormat.yMMM().format(date);
         default:
       }
     }

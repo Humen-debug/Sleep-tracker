@@ -6,14 +6,14 @@ import 'package:sleep_tracker/components/moods/utils.dart';
 import 'package:sleep_tracker/utils/string.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
-class MoodBoard extends StatefulWidget {
-  const MoodBoard({super.key});
+class MoodPicker extends StatefulWidget {
+  const MoodPicker({super.key});
 
   @override
-  State<MoodBoard> createState() => _MoodBoardState();
+  State<MoodPicker> createState() => _MoodPickerState();
 }
 
-class _MoodBoardState extends State<MoodBoard> {
+class _MoodPickerState extends State<MoodPicker> {
   // dev. It should be fetched from the today's sleeping quality
   /// the sleeping quality, in range of 0 to 1.
   double? value;

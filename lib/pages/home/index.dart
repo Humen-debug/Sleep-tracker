@@ -7,7 +7,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:sleep_tracker/components/line_chart.dart';
 import 'package:sleep_tracker/components/moods/daily_mood.dart';
-import 'package:sleep_tracker/components/moods/mood_board.dart';
+import 'package:sleep_tracker/components/moods/mood_picker.dart';
 import 'package:sleep_tracker/components/sleep_phase_block.dart';
 import 'package:sleep_tracker/components/sleep_timer.dart';
 import 'package:sleep_tracker/utils/style.dart';
@@ -116,7 +116,7 @@ class _HomePageState extends State<HomePage> {
             ),
             divider(),
             // Mood
-            const MoodBoard(),
+            const MoodPicker(),
             divider(),
             const _SleepCycleChart(),
             divider(),
