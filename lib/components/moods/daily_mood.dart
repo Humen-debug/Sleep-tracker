@@ -54,10 +54,12 @@ class _DailyMoodState extends State<DailyMood> {
               PeriodPicker(
                 maxWidth: 100,
                 mode: PeriodPickerMode.months,
-                firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                setSelectedDate: (v) => setState(() => _date = v),
-                setForward: () => setState(() => _date = _date?.add(Duration(days: 30))),
-                setBackward: () => setState(() => _date = _date?.subtract(Duration(days: 30))),
+                selectedDate: _date,
+                firstDate: DateTime.now().subtract(const Duration(days: 365 * 2)),
+                lastDate: _now,
+                onDateChanged: (v) {
+                  setState(() => _date = v);
+                },
               )
             ],
           ),

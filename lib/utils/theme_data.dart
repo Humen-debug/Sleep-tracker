@@ -114,6 +114,11 @@ SliderThemeData sliderTheme = SliderThemeData(
   valueIndicatorTextStyle: textTheme.bodySmall?.copyWith(color: Style.grey1),
 );
 
+DialogTheme dialogTheme = DialogTheme(
+    backgroundColor: Style.grey4,
+    elevation: 0.4,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Style.radiusSm)));
+
 CupertinoThemeData cupertinoTheme = const CupertinoThemeData(
   brightness: Brightness.dark,
   primaryColor: primaryColor,
@@ -130,6 +135,7 @@ final ThemeData themeData = ThemeData(
     inputDecorationTheme: inputDecorationTheme,
     switchTheme: switchTheme,
     sliderTheme: sliderTheme,
+    dialogTheme: dialogTheme,
     cupertinoOverrideTheme: cupertinoTheme,
     dividerTheme: const DividerThemeData(thickness: 1),
     textTheme: textTheme,
