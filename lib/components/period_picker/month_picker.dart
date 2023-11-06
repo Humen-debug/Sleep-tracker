@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:sleep_tracker/components/period_picker/calendar_month_picker.dart';
+import 'package:sleep_tracker/components/period_picker/const.dart';
 
 import 'package:sleep_tracker/utils/style.dart';
 
@@ -41,7 +42,7 @@ Future<DateTime?> showMonthPicker({
     confirmText: confirmText,
   );
 
-  return showDialog(
+  return showDialog<DateTime>(
       context: context,
       useRootNavigator: useRootNavigator,
       builder: (BuildContext context) {
@@ -86,8 +87,6 @@ class MonthPickerDialog extends StatefulWidget {
   State<MonthPickerDialog> createState() => _MonthPickerDialogState();
 }
 
-const double _actionHeight = 52.0;
-
 class _MonthPickerDialogState extends State<MonthPickerDialog> {
   late DateTime _selectedDate = widget.initialDate;
 
@@ -106,7 +105,7 @@ class _MonthPickerDialogState extends State<MonthPickerDialog> {
   }
 
   final Size _dialogSize =
-      const Size(224, (monthPickerRowHeight * DateTime.monthsPerYear ~/ monthPickerColumnCount) + _actionHeight + 42);
+      const Size(224, (monthPickerRowHeight * DateTime.monthsPerYear ~/ monthPickerColumnCount) + actionHeight + 42);
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +118,7 @@ class _MonthPickerDialogState extends State<MonthPickerDialog> {
 
     final actions = Container(
       alignment: AlignmentDirectional.centerEnd,
-      constraints: const BoxConstraints(minHeight: _actionHeight),
+      constraints: const BoxConstraints(minHeight: actionHeight),
       padding: const EdgeInsets.symmetric(horizontal: Style.spacingXs),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
+import 'package:sleep_tracker/components/period_picker/const.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
 class _MonthPickerHeader extends StatelessWidget {
@@ -23,55 +24,48 @@ class _MonthPickerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Padding(
           padding: const EdgeInsets.only(left: Style.spacingMd),
           child: Text(titleText, style: Theme.of(context).textTheme.bodySmall),
         ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            GestureDetector(
-              onTap: handlePrevious,
-              child: Padding(
-                padding: const EdgeInsets.all(Style.spacingXs),
-                child:
-                    SvgPicture.asset('assets/icons/chevron-left.svg', color: hasPrevious ? Style.grey1 : Style.grey3),
-              ),
-            ),
-            GestureDetector(
-              onTap: handleNext,
-              child: Padding(
-                padding: const EdgeInsets.all(Style.spacingXs),
-                child: SvgPicture.asset('assets/icons/chevron-right.svg', color: hasNext ? Style.grey1 : Style.grey3),
-              ),
-            )
-          ],
+        const Spacer(),
+        GestureDetector(
+          onTap: handlePrevious,
+          child: Padding(
+            padding: const EdgeInsets.all(Style.spacingXs),
+            child: SvgPicture.asset('assets/icons/chevron-left.svg', color: hasPrevious ? Style.grey1 : Style.grey3),
+          ),
+        ),
+        GestureDetector(
+          onTap: handleNext,
+          child: Padding(
+            padding: const EdgeInsets.all(Style.spacingXs),
+            child: SvgPicture.asset('assets/icons/chevron-right.svg', color: hasNext ? Style.grey1 : Style.grey3),
+          ),
         ),
       ],
     );
   }
 }
 
-const double monthPickerRowHeight = 42.0;
-const int monthPickerColumnCount = 3;
-
 class CalendarMonthPicker extends StatefulWidget {
-  const CalendarMonthPicker(
-      {super.key,
-      required this.initMonth,
-      required this.firstDate,
-      required this.lastDate,
-      required this.onChanged,
-      required this.selectedDate});
+  const CalendarMonthPicker({
+    super.key,
+    required this.initMonth,
+    required this.firstDate,
+    required this.lastDate,
+    required this.onChanged,
+    required this.selectedDate,
+    this.scrollDirection = Axis.vertical,
+  });
 
   final DateTime initMonth;
   final DateTime firstDate;
   final DateTime lastDate;
   final DateTime selectedDate;
   final void Function(DateTime value) onChanged;
+  final Axis scrollDirection;
 
   @override
   State<CalendarMonthPicker> createState() => _CalendarMonthPickerState();
@@ -126,6 +120,15 @@ class _CalendarMonthPickerState extends State<CalendarMonthPicker> {
     }
   }
 
+  void _handleYearPageChanged(int page) {
+    final yearDate = DateTime(widget.firstDate.year + page);
+    if (_currentYear.year != yearDate.year) {
+      setState(() {
+        _currentYear = DateTime(yearDate.year);
+      });
+    }
+  }
+
   Widget _buildItems(BuildContext context, int index) {
     final DateTime year = widget.firstDate.copyWith(year: widget.firstDate.year + index);
     return _MonthPicker(
@@ -168,8 +171,9 @@ class _CalendarMonthPickerState extends State<CalendarMonthPicker> {
               }
             },
             child: PageView.builder(
-              scrollDirection: Axis.vertical,
+              scrollDirection: widget.scrollDirection,
               controller: _pageController,
+              onPageChanged: widget.scrollDirection == Axis.horizontal ? _handleYearPageChanged : null,
               physics: const NeverScrollableScrollPhysics(),
               itemBuilder: _buildItems,
               itemCount: (widget.lastDate.year - widget.firstDate.year) + 1,

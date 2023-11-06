@@ -39,8 +39,6 @@ class PeriodPicker extends StatelessWidget {
       this.selectedRange == null || !this.selectedRange!.end.isAfter(this.lastDate),
       "selectedRange's end date must be on or before lastDate ${this.lastDate}.",
     );
-    assert(!(mode == PeriodPickerMode.weeks && !rangeSelected),
-        'weeks mode must contains at least ${DateTime.daysPerWeek} in selection.');
   }
 
   final PeriodPickerMode mode;
@@ -70,6 +68,8 @@ class PeriodPicker extends StatelessWidget {
       switch (mode) {
         case PeriodPickerMode.days:
           return DateFormat.MMMd().format(date);
+        case PeriodPickerMode.weeks:
+          return '${DateFormat.Md().format(date)} - ${DateFormat.Md().format(date.add(const Duration(days: DateTime.daysPerWeek)))}';
         case PeriodPickerMode.months:
           bool isSameYear = date.year == DateTime.now().year;
           return isSameYear ? DateFormat.MMM().format(date) : DateFormat.yMMM().format(date);
@@ -80,11 +80,11 @@ class PeriodPicker extends StatelessWidget {
   }
 
   void _handleDateSelected(DateTime? selected) {
-    if (onDateChanged != null) onDateChanged!(selected);
+    onDateChanged?.call(selected);
   }
 
   void _handleRangeSelected(DateTimeRange? selected) {
-    if (onRangeChanged != null) onRangeChanged!(selected);
+    onRangeChanged?.call(selected);
   }
 
   @override
@@ -102,6 +102,7 @@ class PeriodPicker extends StatelessWidget {
                     if (rangeSelected) {
                       final range = await showDateRangePicker(
                         context: context,
+                        initialEntryMode: DatePickerEntryMode.calendarOnly,
                         currentDate: DateTime.now(),
                         initialDateRange: selectedRange,
                         firstDate: firstDate,
@@ -111,6 +112,7 @@ class PeriodPicker extends StatelessWidget {
                     } else {
                       final date = await showDatePicker(
                           context: context,
+                          initialEntryMode: DatePickerEntryMode.calendarOnly,
                           initialDate: selectedRange?.start ?? DateTime.now(),
                           firstDate: firstDate,
                           lastDate: lastDate);
@@ -118,6 +120,18 @@ class PeriodPicker extends StatelessWidget {
                     }
                     break;
                   case PeriodPickerMode.weeks:
+                    if (!context.mounted) return;
+                    if (rangeSelected) {
+                    } else {
+                      final date = await showWeekPicker(
+                        context: context,
+                        initialDate: selectedDate ?? DateTime.now(),
+                        firstDate: firstDate,
+                        lastDate: lastDate,
+                      );
+                      print(date);
+                      _handleDateSelected(date);
+                    }
                     break;
                   case PeriodPickerMode.months:
                     if (!context.mounted) return;

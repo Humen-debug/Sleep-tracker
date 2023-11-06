@@ -42,7 +42,7 @@ class _MainPageState extends State<MainPage> {
                   .toList()),
           body: SafeArea(child: child),
           extendBody: true,
-          backgroundColor: Colors.transparent,
+          backgroundColor: Theme.of(context).colorScheme.background,
         );
       },
     );
