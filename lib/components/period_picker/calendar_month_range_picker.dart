@@ -111,10 +111,13 @@ class _CalendarMonthRangePickerState extends State<CalendarMonthRangePicker> {
 
   @override
   Widget build(BuildContext context) {
+    const Key sliverAfterKey = Key('sliverAfterKey');
     return Column(
       children: [
         Expanded(
             child: CustomScrollView(
+          controller: _controller,
+          center: sliverAfterKey,
           slivers: <Widget>[
             SliverList(
                 delegate: SliverChildBuilderDelegate(
@@ -122,10 +125,11 @@ class _CalendarMonthRangePickerState extends State<CalendarMonthRangePicker> {
               childCount: _initialYearIndex,
             )),
             SliverList(
+                key: sliverAfterKey,
                 delegate: SliverChildBuilderDelegate(
-              (context, index) => _buildYearItems(context, index, false),
-              childCount: _numberOfYears - _initialYearIndex,
-            )),
+                  (context, index) => _buildYearItems(context, index, false),
+                  childCount: _numberOfYears - _initialYearIndex,
+                )),
           ],
         ))
       ],

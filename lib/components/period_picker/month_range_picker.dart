@@ -48,7 +48,7 @@ Future<DateTimeRange?> showMonthRangePicker({
     currentDate: currentDate,
   );
 
-  return showDialog(
+  return showDialog<DateTimeRange>(
       context: context,
       useRootNavigator: useRootNavigator,
       builder: (BuildContext context) {

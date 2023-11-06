@@ -313,18 +313,18 @@ class __WeekPickerState extends State<_WeekPicker> {
 
   Widget _buildDayItem(
       BuildContext context, DateTime dayToBuild, int dayOffset, DateTime firstDateInMonth, bool withinThisMonth) {
-    final bool isSelectedDay = DateTimeUtils.isSameWeek(widget.selectedDate, dayToBuild);
+    final bool isInRange = DateTimeUtils.isSameWeek(widget.selectedDate, dayToBuild);
     final bool isDisabled = dayToBuild.isAfter(widget.lastDate) ||
         dayToBuild.isBefore(widget.firstDate) ||
         !DateUtils.isSameMonth(firstDateInMonth, dayToBuild);
     final bool isToday = DateUtils.isSameDay(widget.currentDate, dayToBuild);
     final Set<MaterialState> states = <MaterialState>{
       if (isDisabled) MaterialState.disabled,
-      if (isSelectedDay) MaterialState.selected,
+      if (isInRange) MaterialState.selected,
     };
     final Color highlightColor = _highlightColor(context);
     final decoration = BoxDecoration(
-      borderRadius: !isSelectedDay ? BorderRadius.circular(Style.radiusXs) : null,
+      borderRadius: !isInRange ? BorderRadius.circular(Style.radiusXs) : null,
       border: states.contains(MaterialState.selected) || !isToday
           ? null
           : Border.all(color: Theme.of(context).primaryColor),

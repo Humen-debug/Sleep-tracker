@@ -86,12 +86,12 @@ abstract final class DateTimeUtils {
     return date.weekday % DateTime.daysPerWeek;
   }
 
-  /// The [weekday] is 0 for Sunday, 1 for Monday, etc. up to 7 for Sunday.
+  /// The [weekday] is 0 for Sunday, 1 for Monday, etc. up to 6 for Sunday.
   static DateTime mostRecentWeekday(DateTime date, int weekday) {
     return DateTime(date.year, date.month, date.day - (date.weekday - weekday) % 7);
   }
 
-  /// The [weekday] is 0 for Sunday, 1 for Monday, etc. up to 7 for Sunday.
+  /// The [weekday] is 0 for Sunday, 1 for Monday, etc. up to 6 for Sunday.
   static DateTime mostNearestWeekday(DateTime date, int weekday) {
     return DateTime(date.year, date.month, date.day + (weekday - date.weekday + 7) % 7);
   }

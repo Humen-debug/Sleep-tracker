@@ -122,9 +122,12 @@ class PeriodPicker extends StatelessWidget {
                   case PeriodPickerMode.weeks:
                     if (!context.mounted) return;
                     if (rangeSelected) {
-                      // dev
-                      final range =
-                          await showDateRangePicker(context: context, firstDate: firstDate, lastDate: lastDate);
+                      final range = await showWeekRangePicker(
+                        context: context,
+                        firstDate: firstDate,
+                        lastDate: lastDate,
+                        initialDateRange: selectedRange,
+                      );
                       _handleRangeSelected(range);
                     } else {
                       final date = await showWeekPicker(
