@@ -306,6 +306,11 @@ class __WeekPickerState extends State<_WeekPicker> {
     return result;
   }
 
+  Color _highlightColor(BuildContext context) {
+    return DatePickerTheme.of(context).rangeSelectionBackgroundColor ??
+        DatePickerTheme.defaults(context).rangeSelectionBackgroundColor!;
+  }
+
   Widget _buildDayItem(
       BuildContext context, DateTime dayToBuild, int dayOffset, DateTime firstDateInMonth, bool withinThisMonth) {
     final bool isSelectedDay = DateTimeUtils.isSameWeek(widget.selectedDate, dayToBuild);
@@ -317,14 +322,15 @@ class __WeekPickerState extends State<_WeekPicker> {
       if (isDisabled) MaterialState.disabled,
       if (isSelectedDay) MaterialState.selected,
     };
-
+    final Color highlightColor = _highlightColor(context);
     final decoration = BoxDecoration(
       borderRadius: !isSelectedDay ? BorderRadius.circular(Style.radiusXs) : null,
       border: states.contains(MaterialState.selected) || !isToday
           ? null
           : Border.all(color: Theme.of(context).primaryColor),
-      color: states.contains(MaterialState.selected) ? Theme.of(context).colorScheme.secondary : null,
+      color: states.contains(MaterialState.selected) ? highlightColor : null,
     );
+
     Color? dayForegroundColor;
     if (withinThisMonth) {
       // Build days that is in pre-month.
@@ -417,7 +423,7 @@ class __WeekPickerState extends State<_WeekPicker> {
       Widget weekWidget = Container(
         decoration: decoration,
         child: Center(
-          child: Text(weekNumber.toString(), style: TextStyle(color: dayForegroundColor, fontWeight: FontWeight.bold)),
+          child: Text(weekNumber.toString(), style: TextStyle(color: dayForegroundColor, fontWeight: FontWeight.w500)),
         ),
       );
       if (!isDisabled) {
