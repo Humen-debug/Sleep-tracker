@@ -110,7 +110,7 @@ class _MonthPickerDialogState extends State<MonthPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final picker = CalendarMonthPicker(
-        initMonth: _selectedDate,
+        initialMonth: _selectedDate,
         firstDate: widget.firstDate,
         lastDate: widget.lastDate,
         selectedDate: _selectedDate,

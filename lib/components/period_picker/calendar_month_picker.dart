@@ -52,7 +52,7 @@ class _MonthPickerHeader extends StatelessWidget {
 class CalendarMonthPicker extends StatefulWidget {
   const CalendarMonthPicker({
     super.key,
-    required this.initMonth,
+    required this.initialMonth,
     required this.firstDate,
     required this.lastDate,
     required this.onChanged,
@@ -60,7 +60,7 @@ class CalendarMonthPicker extends StatefulWidget {
     this.scrollDirection = Axis.vertical,
   });
 
-  final DateTime initMonth;
+  final DateTime initialMonth;
   final DateTime firstDate;
   final DateTime lastDate;
   final DateTime selectedDate;
@@ -72,7 +72,7 @@ class CalendarMonthPicker extends StatefulWidget {
 }
 
 class _CalendarMonthPickerState extends State<CalendarMonthPicker> {
-  late DateTime _currentYear = widget.initMonth;
+  late DateTime _currentYear = widget.initialMonth;
   late final PageController _pageController = PageController(initialPage: _currentYear.year - widget.firstDate.year);
   final Duration _yearScrollDuration = const Duration(milliseconds: 300);
 
@@ -134,7 +134,7 @@ class _CalendarMonthPickerState extends State<CalendarMonthPicker> {
     return _MonthPicker(
       key: ValueKey<DateTime>(year),
       selectedDate: widget.selectedDate,
-      currentDate: widget.initMonth,
+      currentDate: widget.initialMonth,
       firstDate: widget.firstDate,
       lastDate: widget.lastDate,
       onChanged: _handleMonthSelected,
@@ -233,33 +233,34 @@ class __MonthPickerState extends State<_MonthPicker> {
         gridDelegate: _monthPickerGridDelegate,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        childrenDelegate: SliverChildListDelegate(List.generate(
-          DateTime.monthsPerYear,
-          (index) {
-            final DateTime monthToBuild = DateTime(widget.displayedYear.year, index + 1);
-            final bool isDisabled = monthToBuild.isAfter(widget.lastDate) || monthToBuild.isBefore(widget.firstDate);
-            final bool isSelectedMonth =
-                widget.selectedDate.year == monthToBuild.year && widget.selectedDate.month == monthToBuild.month;
-            final String monthText = DateFormat.MMM().format(widget.displayedYear.copyWith(month: index + 1));
-            if (isSelectedMonth) {
-              return ElevatedButton(
-                onPressed: isDisabled ? null : () => widget.onChanged(monthToBuild),
-                style: Theme.of(context)
-                    .elevatedButtonTheme
-                    .style
-                    ?.copyWith(padding: MaterialStateProperty.resolveWith<EdgeInsetsGeometry?>((_) => EdgeInsets.zero)),
-                child: Text(monthText),
-              );
-            } else {
-              return TextButton(
+        childrenDelegate: SliverChildListDelegate(
+          List.generate(
+            DateTime.monthsPerYear,
+            (index) {
+              final DateTime monthToBuild = DateTime(widget.displayedYear.year, index + 1);
+              final bool isDisabled = monthToBuild.isAfter(widget.lastDate) || monthToBuild.isBefore(widget.firstDate);
+              final bool isSelectedMonth =
+                  widget.selectedDate.year == monthToBuild.year && widget.selectedDate.month == monthToBuild.month;
+              final String monthText = DateFormat.MMM().format(widget.displayedYear.copyWith(month: index + 1));
+              if (isSelectedMonth) {
+                return ElevatedButton(
                   onPressed: isDisabled ? null : () => widget.onChanged(monthToBuild),
-                  child: Text(
-                    monthText,
-                    style: TextStyle(color: isDisabled ? Style.grey3 : Theme.of(context).colorScheme.onSurface),
-                  ));
-            }
-          },
-        )));
+                  style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
+                      padding: MaterialStateProperty.resolveWith<EdgeInsetsGeometry?>((_) => EdgeInsets.zero)),
+                  child: Text(monthText),
+                );
+              } else {
+                return TextButton(
+                    onPressed: isDisabled ? null : () => widget.onChanged(monthToBuild),
+                    child: Text(
+                      monthText,
+                      style: TextStyle(color: isDisabled ? Style.grey3 : Theme.of(context).colorScheme.onSurface),
+                    ));
+              }
+            },
+          ),
+          addRepaintBoundaries: false,
+        ));
   }
 }
 

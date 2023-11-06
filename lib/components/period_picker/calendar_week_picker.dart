@@ -306,15 +306,69 @@ class __WeekPickerState extends State<_WeekPicker> {
     return result;
   }
 
+  Widget _buildDayItem(
+      BuildContext context, DateTime dayToBuild, int dayOffset, DateTime firstDateInMonth, bool withinThisMonth) {
+    final bool isSelectedDay = DateTimeUtils.isSameWeek(widget.selectedDate, dayToBuild);
+    final bool isDisabled = dayToBuild.isAfter(widget.lastDate) ||
+        dayToBuild.isBefore(widget.firstDate) ||
+        !DateUtils.isSameMonth(firstDateInMonth, dayToBuild);
+    final bool isToday = DateUtils.isSameDay(widget.currentDate, dayToBuild);
+    final Set<MaterialState> states = <MaterialState>{
+      if (isDisabled) MaterialState.disabled,
+      if (isSelectedDay) MaterialState.selected,
+    };
+
+    final decoration = BoxDecoration(
+      borderRadius: !isSelectedDay ? BorderRadius.circular(Style.radiusXs) : null,
+      border: states.contains(MaterialState.selected) || !isToday
+          ? null
+          : Border.all(color: Theme.of(context).primaryColor),
+      color: states.contains(MaterialState.selected) ? Theme.of(context).colorScheme.secondary : null,
+    );
+    Color? dayForegroundColor;
+    if (withinThisMonth) {
+      // Build days that is in pre-month.
+      dayForegroundColor = states.contains(MaterialState.selected)
+          ? null
+          : isToday
+              ? Theme.of(context).primaryColor
+              : Style.grey3;
+    } else {
+      // Build default day
+      dayForegroundColor = states.contains(MaterialState.selected)
+          ? null
+          : isToday
+              ? Theme.of(context).primaryColor
+              : isDisabled
+                  ? Style.grey3
+                  : null;
+    }
+
+    // Build the day that is not in this month.
+    Widget dayWidget = Container(
+        decoration: decoration,
+        child: Center(child: Text(DateFormat("d").format(dayToBuild), style: TextStyle(color: dayForegroundColor))));
+    if (!isDisabled) {
+      // Returns the most recent sunday as the start of week.
+      dayWidget = InkResponse(
+        onTap: () => widget.onChanged(DateTimeUtils.mostRecentWeekday(dayToBuild, 0)),
+        statesController: MaterialStatesController(states),
+        radius: dayPickerRowHeight / 2 + 4,
+        child: dayWidget,
+      );
+    }
+    return dayWidget;
+  }
+
   @override
   Widget build(BuildContext context) {
     final int year = widget.displayedMonth.year;
     final int month = widget.displayedMonth.month;
+    final DateTime firstDateInMonth = DateTime(year, month);
 
     final int daysInMonth = DateUtils.getDaysInMonth(year, month);
     final int dayOffset = DateTimeUtils.firstDayOffset(year, month);
     final int dayRemains = DateTimeUtils.lastDayOffset(year, month);
-    final DateTime firstDateInMonth = DateTime(year, month);
 
     final int weeksInMonth = ((daysInMonth + dayOffset) ~/ DateTime.daysPerWeek).ceil();
 
@@ -326,55 +380,7 @@ class __WeekPickerState extends State<_WeekPicker> {
     while (day < daysInMonth + dayRemains) {
       day++;
       final DateTime dayToBuild = DateTime(year, month, day);
-      final bool isSelectedDay = DateTimeUtils.isSameWeek(widget.selectedDate, dayToBuild);
-      final bool isDisabled = dayToBuild.isAfter(widget.lastDate) ||
-          dayToBuild.isBefore(widget.firstDate) ||
-          !DateUtils.isSameMonth(firstDateInMonth, dayToBuild);
-      final bool isToday = DateUtils.isSameDay(widget.currentDate, dayToBuild);
-      final Set<MaterialState> states = <MaterialState>{
-        if (isDisabled) MaterialState.disabled,
-        if (isSelectedDay) MaterialState.selected,
-      };
-
-      final decoration = BoxDecoration(
-        borderRadius: !isSelectedDay ? BorderRadius.circular(Style.radiusXs) : null,
-        border: states.contains(MaterialState.selected) || !isToday
-            ? null
-            : Border.all(color: Theme.of(context).primaryColor),
-        color: states.contains(MaterialState.selected) ? Theme.of(context).colorScheme.secondary : null,
-      );
-      Color? dayForegroundColor;
-      if (day < 1) {
-        // Build days that is in pre-month.
-        dayForegroundColor = states.contains(MaterialState.selected)
-            ? null
-            : isToday
-                ? Theme.of(context).primaryColor
-                : Style.grey3;
-      } else {
-        // Build default day
-        dayForegroundColor = states.contains(MaterialState.selected)
-            ? null
-            : isToday
-                ? Theme.of(context).primaryColor
-                : isDisabled
-                    ? Style.grey3
-                    : null;
-      }
-
-      // Build the day that is not in this month.
-      Widget dayWidget = Container(
-          decoration: decoration,
-          child: Center(child: Text(DateFormat("d").format(dayToBuild), style: TextStyle(color: dayForegroundColor))));
-      if (!isDisabled) {
-        // Returns the most recent sunday as the start of week.
-        dayWidget = InkResponse(
-          onTap: () => widget.onChanged(DateTimeUtils.mostRecentWeekday(dayToBuild, 0)),
-          statesController: MaterialStatesController(states),
-          radius: dayPickerRowHeight / 2 + 4,
-          child: dayWidget,
-        );
-      }
+      Widget dayWidget = _buildDayItem(context, dayToBuild, dayOffset, firstDateInMonth, day < 1);
       dayItems.add(dayWidget);
     }
 
