@@ -69,7 +69,7 @@ class PeriodPicker extends StatelessWidget {
         case PeriodPickerMode.days:
           return DateFormat.MMMd().format(date);
         case PeriodPickerMode.weeks:
-          return '${DateFormat.Md().format(date)} - ${DateFormat.Md().format(date.add(const Duration(days: DateTime.daysPerWeek)))}';
+          return '${DateFormat.Md().format(date)} - ${DateFormat.Md().format(date.add(const Duration(days: DateTime.daysPerWeek - 1)))}';
         case PeriodPickerMode.months:
           bool isSameYear = date.year == DateTime.now().year;
           return isSameYear ? DateFormat.MMM().format(date) : DateFormat.yMMM().format(date);
@@ -129,7 +129,7 @@ class PeriodPicker extends StatelessWidget {
                         firstDate: firstDate,
                         lastDate: lastDate,
                       );
-                      print(date);
+
                       _handleDateSelected(date);
                     }
                     break;
