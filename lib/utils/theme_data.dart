@@ -83,7 +83,7 @@ OutlinedButtonThemeData outlinedButtonTheme = OutlinedButtonThemeData(
   foregroundColor: MaterialStateProperty.all(primaryColor),
   minimumSize: MaterialStateProperty.all<Size>(minButtonSize),
   backgroundColor: MaterialStateProperty.all(Colors.transparent),
-  side: MaterialStateProperty.all(const BorderSide(color: primaryColor)),
+  side: MaterialStateProperty.all(const BorderSide(color: primaryColor, width: 2)),
 ));
 
 TextButtonThemeData textButtonTheme = TextButtonThemeData(
@@ -125,6 +125,19 @@ CupertinoThemeData cupertinoTheme = const CupertinoThemeData(
   scaffoldBackgroundColor: backgroundColor,
 );
 
+ListTileThemeData listTitleTheme = ListTileThemeData(
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Style.radiusSm)),
+  titleTextStyle: textTheme.bodyMedium,
+  tileColor: tertiaryColor,
+  horizontalTitleGap: Style.spacingSm,
+  iconColor: primaryColor,
+  subtitleTextStyle: textTheme.labelSmall?.apply(color: primaryColor),
+  minLeadingWidth: 20,
+  contentPadding: const EdgeInsets.symmetric(vertical: Style.spacingSm, horizontal: Style.spacingMd),
+  dense: true,
+  visualDensity: VisualDensity.compact,
+);
+
 final ThemeData themeData = ThemeData(
     brightness: Brightness.dark,
     primaryColor: primaryColor,
@@ -137,6 +150,7 @@ final ThemeData themeData = ThemeData(
     sliderTheme: sliderTheme,
     dialogTheme: dialogTheme,
     cupertinoOverrideTheme: cupertinoTheme,
+    listTileTheme: listTitleTheme,
     dividerTheme: const DividerThemeData(thickness: 1),
     textTheme: textTheme,
     textSelectionTheme: textSelectionTheme,

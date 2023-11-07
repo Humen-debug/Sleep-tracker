@@ -52,8 +52,8 @@ class _MainPageState extends State<MainPage> {
 List<_BottomNavItem> _routes = [
   _BottomNavItem(icon: 'sleep', route: const HomeRoute()),
   _BottomNavItem(icon: 'plans', route: const PlansRoute()),
-  _BottomNavItem(icon: 'statistic', route: const StatisticRoute()),
-  _BottomNavItem(icon: 'profile', route: const SettingsRoute()),
+  _BottomNavItem(icon: 'statistic', route: const StatisticRouter()),
+  _BottomNavItem(icon: 'profile', route: const SettingsRouter()),
 ];
 
 class _BottomNavItem {
