@@ -1,13 +1,14 @@
 import 'dart:math';
 
 import 'package:auto_route/auto_route.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:sleep_tracker/components/bar_chart.dart';
 import 'package:sleep_tracker/components/line_chart.dart';
 import 'package:sleep_tracker/components/period_pickers.dart';
+import 'package:sleep_tracker/components/sleep_period_tab_bar.dart';
+import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/date_time.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
@@ -48,6 +49,9 @@ class _StatisticPageState extends State<StatisticPage> {
   final DateTime lastDate = DateTimeUtils.mostNearestWeekday(DateTime.now(), 6);
   final DateTime firstDate = DateTime.now().subtract(const Duration(days: 365)).copyWith(day: 1);
 
+  bool get _isDisplayingFirstDate => !selectedRange.start.isAfter(firstDate);
+  bool get _isDisplayingLastDate => !selectedRange.end.isBefore(lastDate);
+
   late DateTimeRange selectedRange =
       DateTimeRange(start: DateTimeUtils.mostRecentWeekday(DateTime.now(), 0), end: lastDate);
 
@@ -66,12 +70,35 @@ class _StatisticPageState extends State<StatisticPage> {
   ];
 
   void _handleTabChanged(int index) {
-    if (_tabIndex != index) setState(() => _tabIndex = index);
+    setState(() => _tabIndex = index);
+  }
+
+  void _handlePreviousPeriod() {
+    if (!_isDisplayingFirstDate) {
+      switch (_tabIndex) {
+        // According to the PeriodPickerMode. 0 index refers to the "DAYS"
+        // selection, which has constant 7-day per week as range.
+        case 0:
+          break;
+        case 1:
+        case 2:
+        default:
+      }
+    }
+  }
+
+  void _handleNextPeriod() {
+    if (!_isDisplayingLastDate) {}
   }
 
   Widget _buildItems(BuildContext context, int index) {
     final moreButton = ElevatedButton(
-        onPressed: () {},
+        onPressed: () {
+          // dev. Since there is only one more button among all statistic chart.
+          // It is assumed the [onPressed] only handle the [SleepHealth] case.
+
+          context.pushRoute(const SleepHealthRoute());
+        },
         style: _elevationButtonStyle,
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -82,7 +109,8 @@ class _StatisticPageState extends State<StatisticPage> {
         ));
 
     final periodHeader = Row(mainAxisSize: MainAxisSize.min, children: [
-      GestureDetector(onTap: () {}, child: SvgPicture.asset('assets/icons/chevron-left.svg', color: Style.grey1)),
+      GestureDetector(
+          onTap: _handlePreviousPeriod, child: SvgPicture.asset('assets/icons/chevron-left.svg', color: Style.grey1)),
       PeriodPicker(
         maxWidth: 100,
         mode: _pickerModes[_tabIndex],
@@ -100,7 +128,8 @@ class _StatisticPageState extends State<StatisticPage> {
           }
         },
       ),
-      GestureDetector(onTap: () {}, child: SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1)),
+      GestureDetector(
+          onTap: _handleNextPeriod, child: SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1)),
     ]);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Style.spacingMd),
@@ -165,23 +194,12 @@ class _StatisticPageState extends State<StatisticPage> {
           backgroundColor: Theme.of(context).colorScheme.background.withOpacity(0.75),
           elevation: 0,
           flexibleSpace: Padding(
-            padding: const EdgeInsets.all(Style.spacingMd),
-            child: Container(
-              decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.tertiary, borderRadius: BorderRadius.circular(100)),
-              child: Row(
-                  children: _tabs
-                      .mapIndexed((index, title) => Expanded(
-                              child: ElevatedButton(
-                            onPressed: () => _handleTabChanged(index),
-                            style: _elevationButtonStyle,
-                            statesController:
-                                MaterialStatesController({if (_tabIndex == index) MaterialState.selected}),
-                            child: Container(height: _tabRowHeight, alignment: Alignment.center, child: Text(title)),
-                          )))
-                      .toList()),
-            ),
-          ),
+              padding: const EdgeInsets.all(Style.spacingMd),
+              child: SleepPeriodTabBar(
+                labels: _tabs,
+                initialIndex: _tabIndex,
+                onChanged: _handleTabChanged,
+              )),
         ),
       ),
       body: ListView.separated(

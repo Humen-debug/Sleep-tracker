@@ -15,6 +15,12 @@ abstract class _$AppRouter extends RootStackRouter {
 
   @override
   final Map<String, PageFactory> pagesMap = {
+    EmptyRouter.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const EmptyRouterPage(),
+      );
+    },
     HomeRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -39,6 +45,12 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const SettingsPage(),
       );
     },
+    SleepHealthRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const SleepHealthPage(),
+      );
+    },
     StatisticRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -46,6 +58,20 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
   };
+}
+
+/// generated route for
+/// [EmptyRouterPage]
+class EmptyRouter extends PageRouteInfo<void> {
+  const EmptyRouter({List<PageRouteInfo>? children})
+      : super(
+          EmptyRouter.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'EmptyRouter';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for
@@ -100,6 +126,20 @@ class SettingsRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'SettingsRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [SleepHealthPage]
+class SleepHealthRoute extends PageRouteInfo<void> {
+  const SleepHealthRoute({List<PageRouteInfo>? children})
+      : super(
+          SleepHealthRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'SleepHealthRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }
