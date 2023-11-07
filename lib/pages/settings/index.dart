@@ -88,6 +88,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 divider,
                 ListTile(
+                  onTap: () => context.pushRoute(const AlarmSettingRoute()),
                   title: Text('Alarm Sound'),
                   subtitle: Text(
                     'Puddles',

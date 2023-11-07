@@ -15,6 +15,12 @@ abstract class _$AppRouter extends RootStackRouter {
 
   @override
   final Map<String, PageFactory> pagesMap = {
+    AlarmSettingRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const AlarmSettingPage(),
+      );
+    },
     ChangePasswordRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -76,6 +82,20 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
   };
+}
+
+/// generated route for
+/// [AlarmSettingPage]
+class AlarmSettingRoute extends PageRouteInfo<void> {
+  const AlarmSettingRoute({List<PageRouteInfo>? children})
+      : super(
+          AlarmSettingRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'AlarmSettingRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for
