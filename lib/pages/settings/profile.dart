@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:sleep_tracker/components/drop_down_button_form_input.dart';
 import 'package:sleep_tracker/components/text_form_input.dart';
+import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/style.dart';
 import 'package:sleep_tracker/utils/input_rules.dart' as rules;
 
@@ -46,7 +47,6 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         automaticallyImplyLeading: true,
         leadingWidth: 40,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: const Text('Edit Profile'),
         actions: [
           TextButton(
@@ -152,6 +152,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: Style.spacingXxl),
             ListTile(
+              onTap: () => context.pushRoute(const ChangePasswordRoute()),
               title: const Text('Change Password'),
               leading: SvgPicture.asset('assets/icons/password.svg',
                   width: 20, height: 20, color: Theme.of(context).primaryColor),

@@ -141,6 +141,7 @@ ListTileThemeData listTitleTheme = ListTileThemeData(
 final ThemeData themeData = ThemeData(
     brightness: Brightness.dark,
     primaryColor: primaryColor,
+    appBarTheme: appBarTheme,
     scaffoldBackgroundColor: backgroundColor,
     elevatedButtonTheme: elevatedButtonTheme,
     outlinedButtonTheme: outlinedButtonTheme,

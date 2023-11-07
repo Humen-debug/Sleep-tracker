@@ -53,7 +53,7 @@ List<_BottomNavItem> _routes = [
   _BottomNavItem(icon: 'sleep', route: const HomeRoute()),
   _BottomNavItem(icon: 'plans', route: const PlansRoute()),
   _BottomNavItem(icon: 'statistic', route: const StatisticRouter()),
-  _BottomNavItem(icon: 'profile', route: const SettingsRouter()),
+  _BottomNavItem(icon: 'profile', route: const SettingsRoute()),
 ];
 
 class _BottomNavItem {

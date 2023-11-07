@@ -113,6 +113,7 @@ class TextFormInput extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.translucent,
       child: Stack(
         children: [
           Container(
@@ -173,7 +174,13 @@ class TextFormInput extends StatelessWidget {
                 enabled: enabled,
                 onSaved: onSaved,
               )),
-              if (trailing != null) trailing!
+              if (trailing != null)
+                Container(
+                  alignment: AlignmentDirectional.topCenter,
+                  height: math.max(labelConstraints.minHeight, inputHeight),
+                  margin: EdgeInsets.only(top: formFieldTopPadding),
+                  child: trailing!,
+                )
             ]),
           ),
         ],
