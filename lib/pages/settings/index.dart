@@ -60,6 +60,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: Style.spacingMd),
             ListTile(
               title: Text('Sleep Diary'),
+              onTap: () => context.pushRoute(const SleepDiaryRoute()),
               leading: SvgPicture.asset('assets/icons/diary.svg', color: Theme.of(context).primaryColor),
               trailing: SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1, width: 24, height: 24),
             ),

@@ -42,7 +42,7 @@ class _MainPageState extends State<MainPage> {
                   .toList()),
           body: SafeArea(child: child),
           extendBody: true,
-          backgroundColor: Theme.of(context).colorScheme.background,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         );
       },
     );
@@ -53,7 +53,7 @@ List<_BottomNavItem> _routes = [
   _BottomNavItem(icon: 'sleep', route: const HomeRoute()),
   _BottomNavItem(icon: 'plans', route: const PlansRoute()),
   _BottomNavItem(icon: 'statistic', route: const StatisticRouter()),
-  _BottomNavItem(icon: 'profile', route: const SettingsRoute()),
+  _BottomNavItem(icon: 'profile', route: const SettingsRouter()),
 ];
 
 class _BottomNavItem {

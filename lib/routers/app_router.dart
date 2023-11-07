@@ -9,6 +9,7 @@ import 'package:sleep_tracker/pages/statistic/sleep_health.dart';
 import 'package:sleep_tracker/pages/settings/index.dart';
 import 'package:sleep_tracker/pages/settings/profile.dart';
 import 'package:sleep_tracker/pages/settings/alarm.dart';
+import 'package:sleep_tracker/pages/settings/sleep_diary.dart';
 import 'package:sleep_tracker/routers/empty_routers.dart';
 
 part 'app_router.gr.dart';
@@ -24,7 +25,10 @@ class AppRouter extends _$AppRouter {
             AutoRoute(page: StatisticRoute.page, initial: true),
             AutoRoute(page: SleepHealthRoute.page),
           ]),
-          AutoRoute(page: SettingsRoute.page),
+          AutoRoute(
+              page: SettingsRouter.page,
+              path: 'settings',
+              children: [AutoRoute(page: SettingsRoute.page, initial: true), AutoRoute(page: SleepDiaryRoute.page)]),
         ]),
         AutoRoute(page: ChangePasswordRoute.page),
         AutoRoute(page: ProfileRoute.page),
