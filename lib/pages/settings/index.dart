@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
@@ -18,6 +19,20 @@ class _SettingsPageState extends State<SettingsPage> {
   bool silenceAsSystem = true;
   bool alarmOn = true;
   bool snoozeOn = true;
+  String? _version;
+
+  @override
+  void initState() {
+    super.initState();
+    _initPackageInfo();
+  }
+
+  Future<void> _initPackageInfo() async {
+    final PackageInfo info = await PackageInfo.fromPlatform();
+    setState(() {
+      _version = info.version;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,9 +164,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1, width: 24, height: 24),
                 ),
                 divider,
-                const ListTile(
-                  title: Text('Version'),
-                  trailing: Text('1.0.0', style: TextStyle(color: Style.grey3)),
+                ListTile(
+                  title: const Text('Version'),
+                  trailing: Text(_version ?? '', style: const TextStyle(color: Style.grey3)),
                 ),
               ]),
             ),
