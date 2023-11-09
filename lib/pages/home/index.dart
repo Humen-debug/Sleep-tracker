@@ -144,6 +144,7 @@ class _HomePageState extends State<HomePage> {
             divider,
             DailyMood(firstDate: firstDate, monthlyMoods: monthlyMoods),
             divider,
+            const SizedBox(height: kBottomNavigationBarHeight),
           ],
         ),
       ),

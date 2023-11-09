@@ -175,7 +175,8 @@ class _SettingsPageState extends State<SettingsPage> {
               title: Text('Logout'),
               leading: SvgPicture.asset('assets/icons/logout.svg', color: Theme.of(context).primaryColor),
               trailing: SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1, width: 24, height: 24),
-            )
+            ),
+            const SizedBox(height: kBottomNavigationBarHeight),
           ],
         ),
       ),

@@ -265,13 +265,15 @@ Once you confirm, your plan record will be reset.''', style: TextStyle(fontWeigh
                   textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
             ),
             Expanded(
-                child: ListView.separated(
-              itemBuilder: _buildPlans,
-              itemCount: _titles.length,
-              separatorBuilder: (_, __) => const SizedBox(height: Style.spacingSm),
-              padding: const EdgeInsets.symmetric(horizontal: Style.spacingMd),
-              physics: const BouncingScrollPhysics(),
-            ))
+              child: ListView.separated(
+                itemBuilder: _buildPlans,
+                itemCount: _titles.length,
+                separatorBuilder: (_, __) => const SizedBox(height: Style.spacingSm),
+                padding: const EdgeInsets.symmetric(horizontal: Style.spacingMd),
+                physics: const BouncingScrollPhysics(),
+              ),
+            ),
+            const SizedBox(height: kBottomNavigationBarHeight),
           ],
         ),
       ),

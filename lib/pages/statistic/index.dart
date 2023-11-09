@@ -203,6 +203,7 @@ class _StatisticPageState extends State<StatisticPage> {
         ),
       ),
       body: ListView.separated(
+        physics: const BouncingScrollPhysics(),
         itemBuilder: _buildItems,
         separatorBuilder: (_, __) => const SizedBox(height: Style.spacingXxl),
         itemCount: _titles.length,

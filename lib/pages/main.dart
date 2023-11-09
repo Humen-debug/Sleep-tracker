@@ -40,7 +40,7 @@ class _MainPageState extends State<MainPage> {
                     ),
                   )
                   .toList()),
-          body: SafeArea(child: child),
+          body: SafeArea(bottom: false, child: child),
           extendBody: true,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         );
