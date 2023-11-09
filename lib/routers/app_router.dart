@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:sleep_tracker/pages/home/enter_bedtime.dart';
 
 import 'package:sleep_tracker/pages/home/index.dart';
 import 'package:sleep_tracker/pages/main.dart';
@@ -33,5 +34,6 @@ class AppRouter extends _$AppRouter {
         AutoRoute(page: ChangePasswordRoute.page),
         AutoRoute(page: ProfileRoute.page),
         AutoRoute(page: AlarmSettingRoute.page),
+        AutoRoute(page: EnterBedtimeRoute.page),
       ];
 }

@@ -95,4 +95,10 @@ abstract final class DateTimeUtils {
   static DateTime mostNearestWeekday(DateTime date, int weekday) {
     return DateTime(date.year, date.month, date.day + (weekday - date.weekday + 7) % 7);
   }
+
+  /// Returns true if two [DateTime] objects have the same hours, minutes, seconds,
+  /// or are both null.
+  static bool isAtSameMomentAs(DateTime? dateA, DateTime? dateB) {
+    return dateA?.hour == dateB?.hour && dateA?.minute == dateB?.minute && dateA?.second == dateB?.second;
+  }
 }

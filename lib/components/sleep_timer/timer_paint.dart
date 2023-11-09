@@ -34,8 +34,8 @@ class TimerPaint extends StatelessWidget {
             48),
         builder: (BuildContext context, AsyncSnapshot<ui.Image?> snapshot) {
           return CustomPaint(
-            size: canvasSize ?? Size(radius * 2 + strokeWidth, radius * 2 + strokeWidth),
-            painter: TimerPainter(
+            size: canvasSize ?? Size.square(radius * 2 + strokeWidth),
+            painter: _TimerPainter(
               progress: progress,
               backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.tertiary,
               activeColor: activeColor ?? Style.highlightGold,
@@ -49,7 +49,7 @@ class TimerPaint extends StatelessWidget {
   }
 }
 
-class TimerPainter extends CustomPainter {
+class _TimerPainter extends CustomPainter {
   /// It is a 0 - 1 range double
   final double progress;
   final double strokeWidth;
@@ -60,7 +60,7 @@ class TimerPainter extends CustomPainter {
   final double indicatorSize;
   final bool reversed;
 
-  TimerPainter({
+  _TimerPainter({
     required this.progress,
     required this.backgroundColor,
     required this.activeColor,
@@ -143,5 +143,5 @@ class TimerPainter extends CustomPainter {
   double _degreeToRad(double degree) => degree * math.pi / 180;
 
   @override
-  bool shouldRepaint(covariant TimerPainter oldDelegate) => oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _TimerPainter oldDelegate) => oldDelegate.progress != progress;
 }

@@ -11,6 +11,7 @@ import 'package:sleep_tracker/components/moods/mood_picker.dart';
 import 'package:sleep_tracker/components/moods/utils.dart';
 import 'package:sleep_tracker/components/sleep_phase_block.dart';
 import 'package:sleep_tracker/components/sleep_timer.dart';
+import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/string.dart';
 import 'package:sleep_tracker/utils/style.dart';
 import 'package:sleep_tracker/utils/theme_data.dart';
@@ -75,30 +76,31 @@ class _HomePageState extends State<HomePage> {
                     constraints: const BoxConstraints(minWidth: 210),
                     child: ElevatedButton(
                         onPressed: () {
-                          _sleepTimerCont.start(
-                              startTime: DateTime.now(), endTime: DateTime.now().add(const Duration(minutes: 1)));
+                          context.pushRoute(const EnterBedtimeRoute());
+                          // _sleepTimerCont.start(
+                          //     startTime: DateTime.now(), endTime: DateTime.now().add(const Duration(minutes: 1)));
                         },
                         child: const Text('Start to Sleep')),
                   ),
                   // Dev
-                  const SizedBox(height: Style.spacingMd),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 210),
-                    child: OutlinedButton(
-                        onPressed: () {
-                          _sleepTimerCont.start(startTime: DateTime.now());
-                        },
-                        child: const Text('Wake up')),
-                  ),
-                  const SizedBox(height: Style.spacingMd),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 210),
-                    child: OutlinedButton(
-                        onPressed: () {
-                          _sleepTimerCont.reset();
-                        },
-                        child: const Text('Reset')),
-                  ),
+                  // const SizedBox(height: Style.spacingMd),
+                  // ConstrainedBox(
+                  //   constraints: const BoxConstraints(minWidth: 210),
+                  //   child: OutlinedButton(
+                  //       onPressed: () {
+                  //         _sleepTimerCont.start(startTime: DateTime.now());
+                  //       },
+                  //       child: const Text('Wake up')),
+                  // ),
+                  // const SizedBox(height: Style.spacingMd),
+                  // ConstrainedBox(
+                  //   constraints: const BoxConstraints(minWidth: 210),
+                  //   child: OutlinedButton(
+                  //       onPressed: () {
+                  //         _sleepTimerCont.reset();
+                  //       },
+                  //       child: const Text('Reset')),
+                  // ),
                   const SizedBox(height: Style.spacingMd),
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 263, minWidth: 220),

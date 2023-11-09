@@ -27,6 +27,12 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const ChangePasswordPage(),
       );
     },
+    EnterBedtimeRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const EnterBedtimePage(),
+      );
+    },
     HomeRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -114,6 +120,20 @@ class ChangePasswordRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'ChangePasswordRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [EnterBedtimePage]
+class EnterBedtimeRoute extends PageRouteInfo<void> {
+  const EnterBedtimeRoute({List<PageRouteInfo>? children})
+      : super(
+          EnterBedtimeRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'EnterBedtimeRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }

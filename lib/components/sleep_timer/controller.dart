@@ -103,8 +103,8 @@ class SleepTimerController extends ChangeNotifier {
       _startTime = null;
       _endTime = null;
       _mode = SleepTimerMode.elapsed;
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   /// if end time is not null, it means there is remaining time between now and end time.
