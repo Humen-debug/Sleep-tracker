@@ -132,15 +132,18 @@ class _SleepDiaryPageState extends State<SleepDiaryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Sleep Diary')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _scrollController.animateTo(0, duration: Duration(milliseconds: 500), curve: Curves.easeInOut);
-        },
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Style.radiusSm)),
-        child:
-            SvgPicture.asset('assets/icons/to-top.svg', color: Theme.of(context).primaryColor, width: 32, height: 32),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: kBottomNavigationBarHeight),
+        child: FloatingActionButton(
+          onPressed: () {
+            _scrollController.animateTo(0, duration: Duration(milliseconds: 500), curve: Curves.easeInOut);
+          },
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 8,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Style.radiusSm)),
+          child:
+              SvgPicture.asset('assets/icons/to-top.svg', color: Theme.of(context).primaryColor, width: 32, height: 32),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       // dev list
@@ -165,7 +168,8 @@ class _SleepDiaryPageState extends State<SleepDiaryPage> {
                   .textTheme
                   .bodySmall
                   ?.copyWith(color: Theme.of(context).colorScheme.tertiary, fontWeight: FontWeight.w500),
-            )
+            ),
+            const SizedBox(height: kBottomNavigationBarHeight),
           ],
         ),
       ),

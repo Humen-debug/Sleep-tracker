@@ -226,6 +226,7 @@ class _SleepHealthPageState extends State<SleepHealthPage> {
         ),
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Column(
           children: [
             const SizedBox(height: _appBarHeight + Style.spacingXl),
@@ -271,7 +272,8 @@ class _SleepHealthPageState extends State<SleepHealthPage> {
                 padding: const EdgeInsets.symmetric(vertical: Style.spacingXs),
                 child: Divider(color: Theme.of(context).colorScheme.tertiary),
               ),
-            )
+            ),
+            const SizedBox(height: kBottomNavigationBarHeight),
           ],
         ),
       ),
