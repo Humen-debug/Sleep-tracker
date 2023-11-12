@@ -5,6 +5,12 @@ import 'package:sleep_tracker/components/sleep_timer.dart';
 import 'package:sleep_tracker/components/sleep_timer/timer_paint.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
+/// [SleepTimer] draws a timer/stopwatch of sleep events duration.
+/// Sleep events can be divided into awaken, go to bed, and sleeping.
+///
+/// It shows the remaining and elapsed time between start and end date/time.
+/// If the start and ent date/time are null (in [controller]), it can show an
+/// infinity elapsed time.
 class SleepTimer extends StatefulWidget {
   final SleepTimerController controller;
   const SleepTimer({super.key, required this.controller});
@@ -20,7 +26,7 @@ class _SleepTimerState extends State<SleepTimer> {
         listenable: widget.controller,
         builder: (BuildContext context, Widget? child) {
           String progress =
-              '${widget.controller.isElapsed ? 'Elapsed' : 'Remained'}${widget.controller.showProgress ? ' (${(widget.controller.progress * 100).toStringAsPrecision(2)})%' : ''}';
+              '${widget.controller.isElapsed ? 'Elapsed' : 'Remained'}${widget.controller.showProgress ? ' (${(widget.controller.progress * 100).round()})%' : ''}';
           String time = widget.controller.isElapsed ? widget.controller.elapsedTime : widget.controller.remainedTime;
 
           return Stack(

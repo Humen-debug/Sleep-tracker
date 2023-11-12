@@ -4,6 +4,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sleep_tracker/components/line_chart.dart';
 import 'package:sleep_tracker/components/moods/daily_mood.dart';
@@ -11,42 +12,92 @@ import 'package:sleep_tracker/components/moods/mood_picker.dart';
 import 'package:sleep_tracker/components/moods/utils.dart';
 import 'package:sleep_tracker/components/sleep_phase_block.dart';
 import 'package:sleep_tracker/components/sleep_timer.dart';
+import 'package:sleep_tracker/models/sleep_record.dart';
+import 'package:sleep_tracker/models/user.dart';
+import 'package:sleep_tracker/providers/auth_provider.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/string.dart';
 import 'package:sleep_tracker/utils/style.dart';
 import 'package:sleep_tracker/utils/theme_data.dart';
 
 @RoutePage()
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   // dev use
-  DateTime startTime = DateTime.now();
-  DateTime endTime = DateTime.now().add(const Duration(hours: 8));
   bool alarmOn = true;
-  // dev use
   final DateTime _now = DateTime.now();
-  late final DateTime firstDate = DateUtils.dateOnly(_now.subtract(const Duration(days: 365)).copyWith(day: 1));
-  late int monthToGenerate = DateUtils.monthDelta(firstDate, _now) + 1;
-  late final List<List<double?>> monthlyMoods = List.generate(monthToGenerate, (index) {
-    int currentMonth = _now.month;
-    int month = (currentMonth - index > 0) ? currentMonth - index : index % monthToGenerate;
-    int year = currentMonth - index <= 0 ? _now.year - 1 : _now.year;
-    return List.generate(
-      DateUtils.getDaysInMonth(year, month),
-      (day) => (index > 0) || day + 1 <= _now.day ? Random().nextDouble() : null,
-    );
-  }).reversed.toList();
 
   late final SleepTimerController _sleepTimerCont = SleepTimerController();
 
   @override
+  void initState() {
+    super.initState();
+    _initTimer();
+  }
+
+  void _initTimer() {
+    final auth = ref.read(authStateProvider);
+    SleepStatus sleepStatus = auth.sleepStatus;
+    final SleepRecord? record = auth.sleepRecords.firstOrNull;
+    switch (sleepStatus) {
+      case SleepStatus.awaken:
+        // if there is previous wake up time, start timer from it.
+        if (record?.end != null) _sleepTimerCont.start(startTime: record!.end);
+        break;
+      case SleepStatus.goToBed:
+        _sleepTimerCont.start(startTime: _now, endTime: record!.start);
+        break;
+      case SleepStatus.sleeping:
+        _sleepTimerCont.start(startTime: record!.start, endTime: record.end);
+        break;
+    }
+    debugPrint('init timer: $record');
+  }
+
+  Future<void> _setBedtime() async {
+    final DateTimeRange? range = await context.pushRoute<DateTimeRange?>(const EnterBedtimeRoute());
+    if (range == null) return;
+
+    final SleepStatus sleepStatus = ref.read(authStateProvider).sleepStatus;
+    final DateTime now = DateTime.now();
+    final bool isAfterNow = range.start.isAfter(now);
+    final DateTime start = !isAfterNow ? range.start : now;
+    final DateTime end = !isAfterNow ? now : range.end;
+    try {
+      if (sleepStatus == SleepStatus.goToBed) {
+        // Edit the latest sleep record, if the user hasn't slept yet.
+        await ref.read(authStateProvider.notifier).updateSleepRecord(range: range);
+        _sleepTimerCont.start(startTime: start, endTime: end);
+      } else if (sleepStatus == SleepStatus.awaken) {
+        await ref.read(authStateProvider.notifier).createSleepRecord(range: range);
+        _sleepTimerCont.start(startTime: start, endTime: end);
+      }
+    } catch (e) {
+      debugPrint('Set bedtime error: $e');
+    }
+  }
+
+  Future<void> _wakeUp() async {
+    final DateTime now = DateTime.now();
+    await ref.read(authStateProvider.notifier).updateSleepRecord(wakeUpAt: now);
+    _sleepTimerCont.start(startTime: now);
+  }
+
+  void _handleMoodChanged(double? value) async {
+    ref.read(authStateProvider.notifier).updateSleepRecord(sleepQuality: value);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authStateProvider);
+    final DateTime firstDate = (auth.sleepRecords.lastOrNull?.start ?? _now).copyWith(day: 1);
+
     Widget divider = Padding(
       padding: const EdgeInsets.only(top: Style.spacingXxl, bottom: Style.spacingLg),
       child: Divider(color: Theme.of(context).colorScheme.tertiary),
@@ -61,7 +112,12 @@ class _HomePageState extends State<HomePage> {
             const _ProfileStatusBar(),
             const SizedBox(height: Style.spacingXl),
             // Timer
-            Text('Awaken Time',
+            Text(
+                auth.sleepStatus == SleepStatus.awaken
+                    ? 'Awaken Time'
+                    : auth.sleepStatus == SleepStatus.goToBed
+                        ? 'Go To Bed'
+                        : 'Sleeping Time',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: Style.spacingSm),
@@ -74,33 +130,22 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   ConstrainedBox(
                     constraints: const BoxConstraints(minWidth: 210),
-                    child: ElevatedButton(
-                        onPressed: () {
-                          context.pushRoute(const EnterBedtimeRoute());
-                          // _sleepTimerCont.start(
-                          //     startTime: DateTime.now(), endTime: DateTime.now().add(const Duration(minutes: 1)));
-                        },
-                        child: const Text('Start to Sleep')),
+                    child: auth.sleepStatus == SleepStatus.awaken
+                        ? ElevatedButton(onPressed: _setBedtime, child: const Text('Start to Sleep'))
+                        : auth.sleepStatus == SleepStatus.goToBed
+                            ? OutlinedButton(
+                                onPressed: _setBedtime,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('BEDTIME - ${DateFormat.Hm().format(auth.sleepRecords.first.start)}'),
+                                    const SizedBox(width: Style.radiusXs),
+                                    SvgPicture.asset('assets/icons/edit.svg', color: Theme.of(context).primaryColor)
+                                  ],
+                                ),
+                              )
+                            : ElevatedButton(onPressed: _wakeUp, child: const Text('Wake up')),
                   ),
-                  // Dev
-                  // const SizedBox(height: Style.spacingMd),
-                  // ConstrainedBox(
-                  //   constraints: const BoxConstraints(minWidth: 210),
-                  //   child: OutlinedButton(
-                  //       onPressed: () {
-                  //         _sleepTimerCont.start(startTime: DateTime.now());
-                  //       },
-                  //       child: const Text('Wake up')),
-                  // ),
-                  // const SizedBox(height: Style.spacingMd),
-                  // ConstrainedBox(
-                  //   constraints: const BoxConstraints(minWidth: 210),
-                  //   child: OutlinedButton(
-                  //       onPressed: () {
-                  //         _sleepTimerCont.reset();
-                  //       },
-                  //       child: const Text('Reset')),
-                  // ),
                   const SizedBox(height: Style.spacingMd),
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 263, minWidth: 220),
@@ -116,15 +161,20 @@ class _HomePageState extends State<HomePage> {
                               height: 16,
                               width: 16,
                             ),
-                            Text('Alarm',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(color: Theme.of(context).primaryColor))
+                            Text(
+                              'Alarm',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(color: Theme.of(context).primaryColor),
+                            )
                           ],
                         ),
                         CupertinoSwitch(
-                            applyTheme: true, value: alarmOn, onChanged: (value) => setState(() => alarmOn = value))
+                          applyTheme: true,
+                          value: alarmOn,
+                          onChanged: (value) => setState(() => alarmOn = value),
+                        )
                       ],
                     ),
                   )
@@ -133,16 +183,16 @@ class _HomePageState extends State<HomePage> {
             ),
             divider,
             // Mood
-            _TodayMoodBoard(
-              initialValue: monthlyMoods.last[_now.day - 1],
-              onChanged: (value) => setState(() {
-                monthlyMoods.last[_now.day - 1] = value;
-              }),
-            ),
-            divider,
+            if (auth.sleepStatus != SleepStatus.sleeping) ...[
+              _TodayMoodBoard(
+                initialValue: auth.monthlyMoods.lastOrNull?[_now.day - 1],
+                onChanged: _handleMoodChanged,
+              ),
+              divider,
+            ],
             const _SleepCycleChart(),
             divider,
-            DailyMood(firstDate: firstDate, monthlyMoods: monthlyMoods),
+            DailyMood(firstDate: firstDate, monthlyMoods: auth.monthlyMoods),
             divider,
             const SizedBox(height: kBottomNavigationBarHeight),
           ],
@@ -152,18 +202,16 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class _ProfileStatusBar extends StatelessWidget {
+class _ProfileStatusBar extends ConsumerWidget {
   const _ProfileStatusBar();
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final User? user = ref.watch(authStateProvider).user;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingMd),
       child: Row(
         children: [
-          const CircleAvatar(
-            backgroundColor: Style.grey3,
-            maxRadius: 24,
-          ),
+          const CircleAvatar(backgroundColor: Style.grey3, maxRadius: 24),
           const SizedBox(width: Style.spacingXs),
           Expanded(
             child: Column(
@@ -171,7 +219,7 @@ class _ProfileStatusBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Welcome Back, user',
+                  'Welcome Back, ${user?.name}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w500),
                 ),
                 Text(
@@ -197,8 +245,6 @@ class _TodayMoodBoard extends StatefulWidget {
 }
 
 class __TodayMoodBoardState extends State<_TodayMoodBoard> {
-  // dev. It should be fetched from the today's sleeping quality
-  /// the sleeping quality, in range of 0 to 1.
   late double? _value = widget.initialValue;
 
   bool isSliding = false;

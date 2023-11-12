@@ -22,16 +22,22 @@ class DailyMood extends StatefulWidget {
 
 class _DailyMoodState extends State<DailyMood> {
   final DateTime _now = DateTime.now();
-  // dev use
+
   DateTime _currentMonth = DateUtils.dateOnly(DateTime.now()).copyWith(day: 1);
 
   late final PageController _pageController =
       PageController(initialPage: DateUtils.monthDelta(widget.firstDate, _currentMonth));
 
   int get average {
-    int index = DateUtils.monthDelta(widget.firstDate, _currentMonth);
+    final int index = DateUtils.monthDelta(widget.firstDate, _currentMonth);
 
-    return (widget.monthlyMoods[index].whereNotNull().average * 100).round();
+    if (index < widget.monthlyMoods.length) {
+      final moods = widget.monthlyMoods[index].whereNotNull();
+      if (moods.isNotEmpty) {
+        return (moods.average * 100).round();
+      }
+    }
+    return 0;
   }
 
   bool get _isDisplayingFirstMonth => !_currentMonth.isAfter(DateTime(widget.firstDate.year, widget.firstDate.month));

@@ -120,6 +120,7 @@ class _BedtimeInputPaintState extends State<BedtimeInputPaint> {
           end = end.subtract(const Duration(minutes: minuteFactor));
         }
       }
+
       // If the duration between start and end is larger than a day,
       if (end.difference(start).inMinutes > _minutesInDay) {
         // Subtract end by a day.

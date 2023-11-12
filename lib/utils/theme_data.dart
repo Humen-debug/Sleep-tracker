@@ -84,6 +84,7 @@ OutlinedButtonThemeData outlinedButtonTheme = OutlinedButtonThemeData(
   minimumSize: MaterialStateProperty.all<Size>(minButtonSize),
   backgroundColor: MaterialStateProperty.all(Colors.transparent),
   side: MaterialStateProperty.all(const BorderSide(color: primaryColor, width: 2)),
+  textStyle: MaterialStateProperty.all(textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
 ));
 
 TextButtonThemeData textButtonTheme = TextButtonThemeData(

@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:sleep_tracker/components/bedtime_input/index.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
-@RoutePage()
+@RoutePage<DateTimeRange>()
 class EnterBedtimePage extends StatefulWidget {
   const EnterBedtimePage({super.key});
 
@@ -21,17 +21,18 @@ class _EnterBedtimePageState extends State<EnterBedtimePage> {
   @override
   void initState() {
     super.initState();
-    final DateTime now = DateUtils.dateOnly(DateTime.now());
+    final DateTime now = DateTime.now();
     // todo: add personalization or plan recommendation
     _selectedRange = DateTimeRange(start: now, end: now.add(const Duration(hours: 8)));
   }
 
   void _handleCancel() {
-    Navigator.pop(context);
+    context.popRoute();
   }
 
+  /// Returns the [_selectedRange] to home page.
   void _handleSave() {
-    Navigator.pop(context);
+    context.popRoute(_selectedRange);
   }
 
   void _handleAlarmChanged(bool value) {

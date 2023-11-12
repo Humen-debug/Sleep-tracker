@@ -1,16 +1,17 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:sleep_tracker/pages/home/enter_bedtime.dart';
+import 'package:flutter/material.dart';
 
+import 'package:sleep_tracker/pages/home/enter_bedtime.dart';
 import 'package:sleep_tracker/pages/home/index.dart';
 import 'package:sleep_tracker/pages/main.dart';
 import 'package:sleep_tracker/pages/plans.dart';
+import 'package:sleep_tracker/pages/settings/alarm.dart';
 import 'package:sleep_tracker/pages/settings/change_password.dart';
-import 'package:sleep_tracker/pages/statistic/index.dart';
-import 'package:sleep_tracker/pages/statistic/sleep_health.dart';
 import 'package:sleep_tracker/pages/settings/index.dart';
 import 'package:sleep_tracker/pages/settings/profile.dart';
-import 'package:sleep_tracker/pages/settings/alarm.dart';
 import 'package:sleep_tracker/pages/settings/sleep_diary.dart';
+import 'package:sleep_tracker/pages/statistic/index.dart';
+import 'package:sleep_tracker/pages/statistic/sleep_health.dart';
 import 'package:sleep_tracker/routers/empty_routers.dart';
 
 part 'app_router.gr.dart';

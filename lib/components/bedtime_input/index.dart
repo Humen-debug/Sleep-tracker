@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:sleep_tracker/components/bedtime_input/painter.dart';
+import 'package:sleep_tracker/components/bedtime_input/utils.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
 const double _tabRowHeight = 42.0;
@@ -21,7 +22,23 @@ class BedtimeInput extends StatefulWidget {
 }
 
 class _BedtimeInputState extends State<BedtimeInput> {
-  late DateTimeRange _selectedRange = widget.initialRange;
+  late DateTimeRange _selectedRange;
+
+  late DateTime _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    final DateTime start = widget.initialRange.start;
+    final DateTime end = widget.initialRange.end;
+
+    /// Separate date and time to handle time selection that is before and after 0 am.
+    _selectedDate = DateUtils.dateOnly(start);
+    _selectedRange = DateTimeRange(
+      start: start.copyWith(minute: roundUp(start.minute, 5), second: 0),
+      end: end.copyWith(minute: roundUp(end.minute, 5), second: 0),
+    );
+  }
 
   final List<String> _tabs = ['Date', 'Time'];
   int _tabIndex = 1;
@@ -31,21 +48,29 @@ class _BedtimeInputState extends State<BedtimeInput> {
   }
 
   void _handleDateChanged(DateTime value) {
+    setState(() {
+      _selectedDate = DateUtils.dateOnly(value);
+    });
     final Duration duration = _selectedRange.duration;
     final DateTime start = value.copyWith(hour: _selectedRange.start.hour, minute: _selectedRange.start.minute);
     final DateTime end = start.add(duration);
     final DateTimeRange range = DateTimeRange(start: start, end: end);
-    setState(() {
-      _selectedRange = range;
-    });
+
     widget.onChanged?.call(range);
   }
 
   void _handleTimeChanged(DateTimeRange value) {
-    final DateTime dateOnlyStart = DateUtils.dateOnly(_selectedRange.start);
+    final DateTime dateOnlyStart = DateUtils.dateOnly(_selectedDate);
+    DateTime start = dateOnlyStart.copyWith(hour: value.start.hour, minute: value.start.minute);
+    DateTime end = start.add(value.duration);
+    DateTime now = DateTime.now();
+    const day = Duration(days: 1);
+    // Ensure end is after now.
+    if (!end.isAfter(now)) {
+      start = start.add(day);
+      end = end.add(day);
+    }
 
-    final DateTime start = dateOnlyStart.copyWith(hour: value.start.hour, minute: value.start.minute);
-    final DateTime end = start.add(value.duration);
     final DateTimeRange range = DateTimeRange(start: start, end: end);
     setState(() {
       _selectedRange = range;

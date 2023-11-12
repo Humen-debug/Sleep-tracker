@@ -28,7 +28,7 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
     EnterBedtimeRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
+      return AutoRoutePage<DateTimeRange>(
         routeData: routeData,
         child: const EnterBedtimePage(),
       );

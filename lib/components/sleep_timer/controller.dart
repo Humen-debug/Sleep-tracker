@@ -6,13 +6,19 @@ import 'package:sleep_tracker/utils/date_time.dart';
 
 class SleepTimerController extends ChangeNotifier {
   SleepTimerController({
-    SleepTimerMode mode = SleepTimerMode.elapsed,
-    DateTime? startTime,
-    DateTime? endTime,
-  })  : _mode = mode,
-        _startTime = startTime,
-        _endTime = endTime,
-        assert(startTime != null ? (endTime?.isAfter(startTime) ?? true) : true);
+    SleepTimerDisplayMode displayMode = SleepTimerDisplayMode.elapsed,
+    DateTime? start,
+    DateTime? end,
+    DateTime? nextStart,
+    DateTime? nextEnd,
+  })  : _displayMode = displayMode,
+        _startTime = start,
+        _endTime = end,
+        _nextStart = nextStart,
+        _nextEnd = nextEnd,
+        assert(start == null || (end?.isAfter(start) ?? true), 'startTime $start must be on or before endTime $end.');
+
+  // final WidgetRef ref;
 
   bool get isActive => _timer?.isActive ?? false;
 
@@ -22,6 +28,9 @@ class SleepTimerController extends ChangeNotifier {
   DateTime? _endTime;
   DateTime? get endTime => _endTime;
 
+  DateTime? _nextStart;
+  DateTime? _nextEnd;
+
   SleepTimerState get _state => _startTime != null && _endTime != null
       ? SleepTimerState.limited
       : _startTime != null && _endTime == null
@@ -30,8 +39,8 @@ class SleepTimerController extends ChangeNotifier {
 
   Timer? _timer;
 
-  SleepTimerMode _mode;
-  bool get isElapsed => _mode == SleepTimerMode.elapsed;
+  SleepTimerDisplayMode _displayMode;
+  bool get isElapsed => _displayMode == SleepTimerDisplayMode.elapsed;
   bool get ableToSwitchMode => _endTime != null;
 
   /// if there is no end time and the timer starts, let [_totalSeconds] becomes the total seconds per day.
@@ -48,11 +57,12 @@ class SleepTimerController extends ChangeNotifier {
     }
   }
 
-  /// In Elapsed Mode, progress is calculated by the [elapsedSeconds]/[_totalSeconds].
-  /// In Remained Mode, progress is calculated by the [remainedSeconds]/[_totalSeconds].
+  /// In Elapsed Mode, progress is calculated by the [_elapsed.inSeconds]/[_totalSeconds].
+  /// In Remained Mode, progress is calculated by the [_remained.inSeconds]/[_totalSeconds].
   double get progress => _totalSeconds == 0
       ? 0
-      : (_mode == SleepTimerMode.elapsed ? _elapsed?.inSeconds ?? 0 : _remained?.inSeconds ?? 0) / _totalSeconds;
+      : (_displayMode == SleepTimerDisplayMode.elapsed ? _elapsed?.inSeconds ?? 0 : _remained?.inSeconds ?? 0) /
+          _totalSeconds;
 
   bool get showProgress => _state != SleepTimerState.infinity;
 
@@ -64,12 +74,23 @@ class SleepTimerController extends ChangeNotifier {
   Duration? get remained => _remained;
   String get remainedTime => formatDuration(_remained);
 
-  void start({required DateTime startTime, DateTime? endTime}) {
+  void start({
+    required DateTime startTime,
+    DateTime? endTime,
+    DateTime? nextStart,
+    DateTime? nextEnd,
+  }) {
+    assert(endTime == null || startTime.isBefore(endTime), 'start $startTime must be before end $endTime.');
+    assert(!startTime.isAfter(DateTime.now()), 'start $startTime must be before or on now ${DateTime.now()}');
+    reset();
     _startTime = startTime;
     _endTime = endTime;
+    _nextStart = nextStart;
+    _nextEnd = nextEnd;
+
     notifyListeners();
 
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    _timer ??= Timer.periodic(const Duration(seconds: 1), (_) {
       final now = DateTime.now();
       final int elapsedSeconds = (now.millisecondsSinceEpoch ~/ 1000) - (startTime.millisecondsSinceEpoch ~/ 1000);
       _elapsed = Duration(seconds: elapsedSeconds);
@@ -77,9 +98,16 @@ class SleepTimerController extends ChangeNotifier {
       if (endTime != null) {
         final int remainedSeconds = (endTime.millisecondsSinceEpoch ~/ 1000) - (now.millisecondsSinceEpoch ~/ 1000);
         _remained = Duration(seconds: remainedSeconds);
-        // end the timer if endTime is set and now is after endTime
+
+        // End the timer if endTime is set and now is after endTime
         if (now.isAfter(endTime)) {
-          reset();
+          /// If user has an upcoming start, restart the timer
+          ///  with [_nextStart] and [_nextEnd].
+          if (_nextStart != null) {
+            start(startTime: _nextStart!, endTime: _nextEnd);
+            _nextStart = null;
+            _nextEnd = null;
+          }
         }
       }
 
@@ -102,19 +130,21 @@ class SleepTimerController extends ChangeNotifier {
       _timer = null;
       _startTime = null;
       _endTime = null;
-      _mode = SleepTimerMode.elapsed;
+      _nextStart = null;
+      _nextEnd = null;
+      _displayMode = SleepTimerDisplayMode.elapsed;
       notifyListeners();
     }
   }
 
   /// if end time is not null, it means there is remaining time between now and end time.
-  /// therefore, [_mode] can be switched to [SleepTimerMode.remained]
+  /// therefore, [_displayMode] can be switched to [SleepTimerDisplayMode.remained]
   void switchMode() {
     if (!ableToSwitchMode) return;
-    if (_mode == SleepTimerMode.elapsed) {
-      _mode = SleepTimerMode.remained;
+    if (_displayMode == SleepTimerDisplayMode.elapsed) {
+      _displayMode = SleepTimerDisplayMode.remained;
     } else {
-      _mode = SleepTimerMode.elapsed;
+      _displayMode = SleepTimerDisplayMode.elapsed;
     }
     notifyListeners();
   }
