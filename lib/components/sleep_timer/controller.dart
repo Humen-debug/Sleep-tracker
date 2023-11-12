@@ -41,7 +41,7 @@ class SleepTimerController extends ChangeNotifier {
 
   SleepTimerDisplayMode _displayMode;
   bool get isElapsed => _displayMode == SleepTimerDisplayMode.elapsed;
-  bool get ableToSwitchMode => _endTime != null;
+  bool get ableToSwitchMode => _endTime != null && _endTime!.isAfter(DateTime.now());
 
   /// if there is no end time and the timer starts, let [_totalSeconds] becomes the total seconds per day.
   final int _defaultTotalSeconds = 24 * 3600;
@@ -82,6 +82,8 @@ class SleepTimerController extends ChangeNotifier {
   }) {
     assert(endTime == null || startTime.isBefore(endTime), 'start $startTime must be before end $endTime.');
     assert(!startTime.isAfter(DateTime.now()), 'start $startTime must be before or on now ${DateTime.now()}');
+    assert(nextEnd == null || (nextStart != null && (nextStart.isBefore(nextEnd))),
+        'nextStart $nextStart must be before nextEnd $nextEnd.');
     reset();
     _startTime = startTime;
     _endTime = endTime;
@@ -92,18 +94,19 @@ class SleepTimerController extends ChangeNotifier {
 
     _timer ??= Timer.periodic(const Duration(seconds: 1), (_) {
       final now = DateTime.now();
-      final int elapsedSeconds = (now.millisecondsSinceEpoch ~/ 1000) - (startTime.millisecondsSinceEpoch ~/ 1000);
+      final int elapsedSeconds = (now.millisecondsSinceEpoch ~/ 1000) - (_startTime!.millisecondsSinceEpoch ~/ 1000);
       _elapsed = Duration(seconds: elapsedSeconds);
 
-      if (endTime != null) {
-        final int remainedSeconds = (endTime.millisecondsSinceEpoch ~/ 1000) - (now.millisecondsSinceEpoch ~/ 1000);
+      if (_endTime != null) {
+        final int remainedSeconds = (_endTime!.millisecondsSinceEpoch ~/ 1000) - (now.millisecondsSinceEpoch ~/ 1000);
         _remained = Duration(seconds: remainedSeconds);
 
         // End the timer if endTime is set and now is after endTime
-        if (now.isAfter(endTime)) {
+        if (now.isAfter(_endTime!)) {
           /// If user has an upcoming start, restart the timer
           ///  with [_nextStart] and [_nextEnd].
           if (_nextStart != null) {
+            print('restart timer: start($_nextStart) - end($_nextEnd)');
             start(startTime: _nextStart!, endTime: _nextEnd);
             _nextStart = null;
             _nextEnd = null;

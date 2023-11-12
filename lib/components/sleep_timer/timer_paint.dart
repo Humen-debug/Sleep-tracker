@@ -108,8 +108,8 @@ class _TimerPainter extends CustomPainter {
     if (indicatorIcon == null) return;
 
     final Offset centerOffset = Offset(radius + capSize, radius + capSize);
-    double capToDegree = capSize / radius;
-    double radian = (_degreeToRad(360) + capToDegree) * (reversed ? (1 - progress) : (progress));
+
+    double radian = (_degreeToRad(360)) * (reversed ? (1 - progress) : (progress));
 
     // translate the canvas to the center of chart
     canvas

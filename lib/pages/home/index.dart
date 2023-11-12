@@ -64,20 +64,27 @@ class _HomePageState extends ConsumerState<HomePage> {
     final DateTimeRange? range = await context.pushRoute<DateTimeRange?>(const EnterBedtimeRoute());
     if (range == null) return;
 
-    final SleepStatus sleepStatus = ref.read(authStateProvider).sleepStatus;
     final DateTime now = DateTime.now();
-    final bool isAfterNow = range.start.isAfter(now);
-    final DateTime start = !isAfterNow ? range.start : now;
-    final DateTime end = !isAfterNow ? now : range.end;
+    final bool isBeforeNow = (range.start).isBefore(now);
+
+    // Break start and end time by now, if the start is after now.
+    final DateTime start = isBeforeNow ? range.start : now;
+    final DateTime end = isBeforeNow ? range.end : range.start;
+
+    // Put the current range.start and range.end into next turn of timer,
+    // if start is after now.
+    final DateTime? nextStart = isBeforeNow ? null : range.start;
+    final DateTime? nextEnd = isBeforeNow ? null : range.end;
+
+    final SleepStatus sleepStatus = ref.read(authStateProvider).sleepStatus;
     try {
       if (sleepStatus == SleepStatus.goToBed) {
         // Edit the latest sleep record, if the user hasn't slept yet.
         await ref.read(authStateProvider.notifier).updateSleepRecord(range: range);
-        _sleepTimerCont.start(startTime: start, endTime: end);
       } else if (sleepStatus == SleepStatus.awaken) {
         await ref.read(authStateProvider.notifier).createSleepRecord(range: range);
-        _sleepTimerCont.start(startTime: start, endTime: end);
       }
+      _sleepTimerCont.start(startTime: start, endTime: end, nextStart: nextStart, nextEnd: nextEnd);
     } catch (e) {
       debugPrint('Set bedtime error: $e');
     }
@@ -112,14 +119,18 @@ class _HomePageState extends ConsumerState<HomePage> {
             const _ProfileStatusBar(),
             const SizedBox(height: Style.spacingXl),
             // Timer
-            Text(
-                auth.sleepStatus == SleepStatus.awaken
-                    ? 'Awaken Time'
-                    : auth.sleepStatus == SleepStatus.goToBed
-                        ? 'Go To Bed'
-                        : 'Sleeping Time',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+            // TODO find better state management in listeing the status
+            ListenableBuilder(
+              listenable: _sleepTimerCont,
+              builder: (BuildContext context, Widget? child) => Text(
+                  auth.sleepStatus == SleepStatus.awaken
+                      ? 'Awaken Time'
+                      : auth.sleepStatus == SleepStatus.goToBed
+                          ? 'Go To Bed'
+                          : 'Sleeping Time',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+            ),
             const SizedBox(height: Style.spacingSm),
             SleepTimer(controller: _sleepTimerCont),
             const SizedBox(height: Style.spacingSm),
@@ -128,23 +139,28 @@ class _HomePageState extends ConsumerState<HomePage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 210),
-                    child: auth.sleepStatus == SleepStatus.awaken
-                        ? ElevatedButton(onPressed: _setBedtime, child: const Text('Start to Sleep'))
-                        : auth.sleepStatus == SleepStatus.goToBed
-                            ? OutlinedButton(
-                                onPressed: _setBedtime,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text('BEDTIME - ${DateFormat.Hm().format(auth.sleepRecords.first.start)}'),
-                                    const SizedBox(width: Style.radiusXs),
-                                    SvgPicture.asset('assets/icons/edit.svg', color: Theme.of(context).primaryColor)
-                                  ],
-                                ),
-                              )
-                            : ElevatedButton(onPressed: _wakeUp, child: const Text('Wake up')),
+                  ListenableBuilder(
+                    listenable: _sleepTimerCont,
+                    builder: (BuildContext context, Widget? child) {
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(minWidth: 210),
+                        child: auth.sleepStatus == SleepStatus.awaken
+                            ? ElevatedButton(onPressed: _setBedtime, child: const Text('Start to Sleep'))
+                            : auth.sleepStatus == SleepStatus.goToBed
+                                ? OutlinedButton(
+                                    onPressed: _setBedtime,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text('BEDTIME - ${DateFormat.Hm().format(auth.sleepRecords.first.start)}'),
+                                        const SizedBox(width: Style.radiusXs),
+                                        SvgPicture.asset('assets/icons/edit.svg', color: Theme.of(context).primaryColor)
+                                      ],
+                                    ),
+                                  )
+                                : ElevatedButton(onPressed: _wakeUp, child: const Text('Wake up')),
+                      );
+                    },
                   ),
                   const SizedBox(height: Style.spacingMd),
                   ConstrainedBox(

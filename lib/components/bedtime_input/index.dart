@@ -38,6 +38,9 @@ class _BedtimeInputState extends State<BedtimeInput> {
       start: start.copyWith(minute: roundUp(start.minute, 5), second: 0),
       end: end.copyWith(minute: roundUp(end.minute, 5), second: 0),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onChanged?.call(_selectedRange);
+    });
   }
 
   final List<String> _tabs = ['Date', 'Time'];
