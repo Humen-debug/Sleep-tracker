@@ -18,8 +18,6 @@ class SleepTimerController extends ChangeNotifier {
         _nextEnd = nextEnd,
         assert(start == null || (end?.isAfter(start) ?? true), 'startTime $start must be on or before endTime $end.');
 
-  // final WidgetRef ref;
-
   bool get isActive => _timer?.isActive ?? false;
 
   DateTime? _startTime;

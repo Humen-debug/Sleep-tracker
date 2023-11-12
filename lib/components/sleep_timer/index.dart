@@ -63,6 +63,15 @@ class _SleepTimerState extends State<SleepTimer> {
                             ?.copyWith(color: Style.grey3, fontWeight: FontWeight.w600)),
                     Text(
                         "${DateFormat.Md().format(widget.controller.endTime!)} ${DateFormat.Hm().format(widget.controller.endTime!)}")
+                  ] else if (widget.controller.startTime != null) ...[
+                    const SizedBox(height: Style.spacingSm),
+                    Text('Start Time',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: Style.grey3, fontWeight: FontWeight.w600)),
+                    Text(
+                        "${DateFormat.Md().format(widget.controller.startTime!)} ${DateFormat.Hm().format(widget.controller.startTime!)}")
                   ],
                   const SizedBox(height: Style.spacingMd),
                 ],

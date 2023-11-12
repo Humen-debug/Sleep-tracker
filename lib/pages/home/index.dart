@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:sleep_tracker/components/dash_line.dart';
 import 'package:sleep_tracker/components/line_chart.dart';
 import 'package:sleep_tracker/components/moods/daily_mood.dart';
 import 'package:sleep_tracker/components/moods/mood_picker.dart';
@@ -20,6 +21,8 @@ import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/string.dart';
 import 'package:sleep_tracker/utils/style.dart';
 import 'package:sleep_tracker/utils/theme_data.dart';
+
+const double _buttonMinimumWidth = 210.0;
 
 @RoutePage()
 class HomePage extends ConsumerStatefulWidget {
@@ -81,10 +84,10 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     final SleepStatus sleepStatus = ref.read(authStateProvider).sleepStatus;
     try {
-      if (sleepStatus == SleepStatus.goToBed) {
-        // Edit the latest sleep record, if the user hasn't slept yet.
+      if (sleepStatus != SleepStatus.awaken) {
+        // Edit the latest sleep record, if the user hasn't slept yet or is sleeping.
         await ref.read(authStateProvider.notifier).updateSleepRecord(range: range);
-      } else if (sleepStatus == SleepStatus.awaken) {
+      } else {
         await ref.read(authStateProvider.notifier).createSleepRecord(range: range);
       }
       _sleepTimerCont.start(startTime: start, endTime: end, nextStart: nextStart, nextEnd: nextEnd);
@@ -125,70 +128,75 @@ class _HomePageState extends ConsumerState<HomePage> {
             const _ProfileStatusBar(),
             const SizedBox(height: Style.spacingXl),
             // Timer
-            // TODO find better state management in listeing the status
             ListenableBuilder(
               listenable: _sleepTimerCont,
-              builder: (BuildContext context, Widget? child) => Text(
-                  auth.sleepStatus == SleepStatus.awaken
-                      ? 'Awaken Time'
-                      : auth.sleepStatus == SleepStatus.goToBed
-                          ? 'Go To Bed'
-                          : 'Sleeping Time',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-            ),
-            const SizedBox(height: Style.spacingSm),
-            SleepTimer(controller: _sleepTimerCont),
-            const SizedBox(height: Style.spacingSm),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Style.spacingXl, vertical: Style.spacingLg),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListenableBuilder(
-                    listenable: _sleepTimerCont,
-                    builder: (BuildContext context, Widget? child) {
-                      return ConstrainedBox(
-                        constraints: const BoxConstraints(minWidth: 210),
-                        child: auth.sleepStatus == SleepStatus.awaken
-                            ? ElevatedButton(onPressed: _setBedtime, child: const Text('Start to Sleep'))
-                            : auth.sleepStatus == SleepStatus.goToBed
-                                ? OutlinedButton(
-                                    onPressed: _setBedtime,
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text('BEDTIME - ${DateFormat.Hm().format(auth.sleepRecords.first.start)}'),
-                                        const SizedBox(width: Style.radiusXs),
-                                        SvgPicture.asset('assets/icons/edit.svg', color: Theme.of(context).primaryColor)
-                                      ],
-                                    ),
-                                  )
-                                : ElevatedButton(onPressed: _wakeUp, child: const Text('Wake up')),
-                      );
-                    },
+              builder: (BuildContext context, Widget? child) {
+                String titleText;
+                Widget mainButton;
+                Widget? secondaryButton;
+                switch (auth.sleepStatus) {
+                  case SleepStatus.awaken:
+                    titleText = 'Awaken Time';
+                    mainButton = ElevatedButton(onPressed: _setBedtime, child: const Text('Start to sleep'));
+                    break;
+                  case SleepStatus.goToBed:
+                    titleText = 'Go To Bed';
+                    mainButton = OutlinedButton(
+                        onPressed: _setBedtime,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('BEDTIME - ${DateFormat.Hm().format(auth.sleepRecords.first.start)}'),
+                            const SizedBox(width: Style.radiusXs),
+                            SvgPicture.asset('assets/icons/edit.svg', color: Theme.of(context).primaryColor)
+                          ],
+                        ));
+                    break;
+                  case SleepStatus.sleeping:
+                    titleText = 'Sleeping Time';
+                    mainButton = ElevatedButton(onPressed: _wakeUp, child: const Text('Wake up'));
+                    secondaryButton = OutlinedButton(onPressed: _snooze, child: const Text('Snooze for 5 minutes'));
+                    break;
+                }
+                final Color primaryColor = Theme.of(context).primaryColor;
+                const BoxConstraints columnConstraints = BoxConstraints(maxWidth: 263, minWidth: 220);
+                const double iconSize = 16.0;
+
+                return Column(mainAxisSize: MainAxisSize.min, children: [
+                  Text(
+                    titleText,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                   ),
+                  // Timer
+                  if (child != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: Style.spacingSm),
+                      child: child,
+                    ),
+                  const SizedBox(height: Style.spacingXxl),
+                  ConstrainedBox(constraints: const BoxConstraints(minWidth: _buttonMinimumWidth), child: mainButton),
+                  if (secondaryButton != null)
+                    Container(
+                      constraints: const BoxConstraints(minWidth: _buttonMinimumWidth),
+                      margin: const EdgeInsets.only(top: Style.spacingSm),
+                      child: secondaryButton,
+                    ),
                   const SizedBox(height: Style.spacingMd),
+                  // alarm switch
                   ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 263, minWidth: 220),
+                    constraints: columnConstraints,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            SvgPicture.asset(
-                              'assets/icons/alarm.svg',
-                              color: Theme.of(context).primaryColor,
-                              height: 16,
-                              width: 16,
-                            ),
+                            SvgPicture.asset('assets/icons/alarm.svg',
+                                color: primaryColor, height: iconSize, width: iconSize),
                             Text(
                               'Alarm',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(color: Theme.of(context).primaryColor),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: primaryColor),
                             )
                           ],
                         ),
@@ -199,10 +207,86 @@ class _HomePageState extends ConsumerState<HomePage> {
                         )
                       ],
                     ),
-                  )
-                ],
-              ),
+                  ),
+                  // Edit went to bed and wake up time
+                  if (auth.sleepStatus == SleepStatus.sleeping) ...[
+                    ConstrainedBox(
+                      constraints: columnConstraints,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            left: iconSize / 2,
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child:
+                                  DashedLine(size: const Size(1, 16), dashWidth: 4, dashSpace: 2, color: primaryColor),
+                            ),
+                          ),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  SvgPicture.asset('assets/icons/zzz.svg',
+                                      color: primaryColor, width: iconSize, height: iconSize),
+                                  const SizedBox(width: Style.spacingXxs),
+                                  Text('Went to Bed', style: TextStyle(color: primaryColor)),
+                                  Expanded(
+                                    child: TextButton(
+                                      onPressed: _setBedtime,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            DateFormat.jm().format(auth.sleepRecords.first.start),
+                                            style: dataTextTheme.bodyMedium?.copyWith(color: Style.grey1),
+                                          ),
+                                          const SizedBox(width: Style.spacingXxs),
+                                          SvgPicture.asset('assets/icons/edit.svg',
+                                              color: Style.grey1, width: 12.0, height: 12.0)
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: Style.spacingMd),
+                              Row(
+                                children: [
+                                  SvgPicture.asset('assets/icons/clock.svg',
+                                      color: primaryColor, width: iconSize, height: iconSize),
+                                  const SizedBox(width: Style.spacingXxs),
+                                  Text('Wake up', style: TextStyle(color: primaryColor)),
+                                  Expanded(
+                                    child: TextButton(
+                                      onPressed: _setBedtime,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            DateFormat.jm().format(auth.sleepRecords.first.end),
+                                            style: dataTextTheme.bodyMedium?.copyWith(color: Style.grey1),
+                                          ),
+                                          const SizedBox(width: Style.spacingXxs),
+                                          SvgPicture.asset('assets/icons/edit.svg',
+                                              color: Style.grey1, width: 12.0, height: 12.0)
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            ],
+                          )
+                        ],
+                      ),
+                    )
+                  ]
+                ]);
+              },
+              child: SleepTimer(controller: _sleepTimerCont),
             ),
+
             divider,
             // Mood
             ListenableBuilder(
