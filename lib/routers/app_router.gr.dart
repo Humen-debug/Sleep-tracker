@@ -33,6 +33,12 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const EnterBedtimePage(),
       );
     },
+    EnterFeelingRoute.name: (routeData) {
+      return AutoRoutePage<double>(
+        routeData: routeData,
+        child: const EnterFeelingPage(),
+      );
+    },
     HomeRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -134,6 +140,20 @@ class EnterBedtimeRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'EnterBedtimeRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [EnterFeelingPage]
+class EnterFeelingRoute extends PageRouteInfo<void> {
+  const EnterFeelingRoute({List<PageRouteInfo>? children})
+      : super(
+          EnterFeelingRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'EnterFeelingRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }

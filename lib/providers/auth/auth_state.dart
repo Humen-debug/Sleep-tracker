@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sleep_tracker/logger/logger.dart';
 import 'package:sleep_tracker/providers/persistance_state.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:sleep_tracker/models/sleep_record.dart';
@@ -28,7 +29,7 @@ class AuthState with _$AuthState implements PersistentState<AuthState> {
     // If the latest sleep record hasn't started yet.
     if (latest.start.isAfter(now)) {
       return SleepStatus.goToBed;
-    } else if (latest.wakeUpAt == null && !latest.end.isBefore(now)) {
+    } else if (latest.wakeUpAt == null && latest.start.isBefore(now)) {
       return SleepStatus.sleeping;
     }
 
@@ -88,7 +89,7 @@ class AuthState with _$AuthState implements PersistentState<AuthState> {
     try {
       return JsonSecureSync.save(key: _localStorageKey, value: value);
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: 'Error saving authState $e');
+      AppLogger.I.e('Error saving authState', error: e, stackTrace: s);
 
       return false;
     }
@@ -99,7 +100,7 @@ class AuthState with _$AuthState implements PersistentState<AuthState> {
     try {
       return await JsonSecureSync.delete(key: _localStorageKey);
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: 'Error deleting authState $e');
+      AppLogger.I.e('Error deleting authState', error: e, stackTrace: s);
       return false;
     }
   }

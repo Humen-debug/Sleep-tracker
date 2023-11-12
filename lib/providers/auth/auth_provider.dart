@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:sleep_tracker/logger/logger.dart';
 import 'package:sleep_tracker/models/sleep_record.dart';
 import 'package:sleep_tracker/models/user.dart';
 import 'package:sleep_tracker/providers/auth_provider.dart';
@@ -11,17 +12,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<bool> restoreFromStorage() async {
     try {
-      debugPrint('Restoring AuthState from SecureStorage.');
+      AppLogger.I.i('Restoring AuthState from SecureStorage.');
       final s = await state.fromStorage();
       if (s == null) {
         return false;
       }
-      debugPrint('AuthState found in SecureStorage');
-      debugPrint(s.toString());
+      AppLogger.I.i('AuthState found in SecureStorage');
+
       state = s;
       return true;
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: 'Error restoring AuthState from SecureStorage $e');
+      AppLogger.I.e('Error restoring AuthState from SecureStorage', error: e, stackTrace: s);
+
       return false;
     }
   }
@@ -67,8 +69,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     assert(range == null || range.end.isAfter(DateTime.now()),
         'range.end ${range.end} must be after now ${DateTime.now()}');
     if (state.sleepRecords.isNotEmpty) {
-      SleepRecord newRecord = state.sleepRecords.first.copyWith(sleepQuality: sleepQuality, wakeUpAt: wakeUpAt);
+      SleepRecord newRecord = state.sleepRecords.first.copyWith(sleepQuality: sleepQuality);
+
       if (range != null) newRecord = newRecord.copyWith(start: range.start, end: range.end);
+      if (wakeUpAt != null) newRecord = newRecord.copyWith(wakeUpAt: wakeUpAt);
 
       state = state.copyWith(sleepRecords: [newRecord, ...state.sleepRecords.sublist(1)]);
       await state.localSave();

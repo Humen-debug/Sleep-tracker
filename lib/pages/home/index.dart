@@ -12,6 +12,7 @@ import 'package:sleep_tracker/components/moods/mood_picker.dart';
 import 'package:sleep_tracker/components/moods/utils.dart';
 import 'package:sleep_tracker/components/sleep_phase_block.dart';
 import 'package:sleep_tracker/components/sleep_timer.dart';
+import 'package:sleep_tracker/logger/logger.dart';
 import 'package:sleep_tracker/models/sleep_record.dart';
 import 'package:sleep_tracker/models/user.dart';
 import 'package:sleep_tracker/providers/auth_provider.dart';
@@ -48,7 +49,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     switch (sleepStatus) {
       case SleepStatus.awaken:
         // if there is previous wake up time, start timer from it.
-        if (record?.end != null) _sleepTimerCont.start(startTime: record!.end);
+
+        if (record?.wakeUpAt != null && (record?.wakeUpAt?.isBefore(_now) ?? false)) {
+          _sleepTimerCont.start(startTime: record!.wakeUpAt!);
+        }
         break;
       case SleepStatus.goToBed:
         _sleepTimerCont.start(startTime: _now, endTime: record!.start);
@@ -57,7 +61,6 @@ class _HomePageState extends ConsumerState<HomePage> {
         _sleepTimerCont.start(startTime: record!.start, endTime: record.end);
         break;
     }
-    debugPrint('init timer: $record');
   }
 
   Future<void> _setBedtime() async {
@@ -85,19 +88,22 @@ class _HomePageState extends ConsumerState<HomePage> {
         await ref.read(authStateProvider.notifier).createSleepRecord(range: range);
       }
       _sleepTimerCont.start(startTime: start, endTime: end, nextStart: nextStart, nextEnd: nextEnd);
-    } catch (e) {
-      debugPrint('Set bedtime error: $e');
+    } catch (e, s) {
+      AppLogger.I.e('Setup Bedtime Error', error: e, stackTrace: s);
     }
   }
 
   Future<void> _wakeUp() async {
     final DateTime now = DateTime.now();
-    await ref.read(authStateProvider.notifier).updateSleepRecord(wakeUpAt: now);
     _sleepTimerCont.start(startTime: now);
+    final double? sleepQuality = await context.pushRoute(const EnterFeelingRoute());
+    await ref.read(authStateProvider.notifier).updateSleepRecord(wakeUpAt: now, sleepQuality: sleepQuality);
   }
 
+  Future<void> _snooze() async {}
+
   void _handleMoodChanged(double? value) async {
-    ref.read(authStateProvider.notifier).updateSleepRecord(sleepQuality: value);
+    await ref.read(authStateProvider.notifier).updateSleepRecord(sleepQuality: value);
   }
 
   @override
@@ -199,13 +205,27 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
             divider,
             // Mood
-            if (auth.sleepStatus != SleepStatus.sleeping) ...[
-              _TodayMoodBoard(
-                initialValue: auth.monthlyMoods.lastOrNull?[_now.day - 1],
-                onChanged: _handleMoodChanged,
-              ),
-              divider,
-            ],
+            ListenableBuilder(
+              listenable: _sleepTimerCont,
+              builder: (BuildContext context, Widget? child) {
+                if (auth.sleepStatus != SleepStatus.sleeping) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _TodayMoodBoard(
+                        initialValue: auth.sleepRecords.first.sleepQuality,
+                        onChanged: _handleMoodChanged,
+                      ),
+                      if (child != null) child
+                    ],
+                  );
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
+              child: divider,
+            ),
+
             const _SleepCycleChart(),
             divider,
             DailyMood(firstDate: firstDate, monthlyMoods: auth.monthlyMoods),
@@ -267,7 +287,7 @@ class __TodayMoodBoardState extends State<_TodayMoodBoard> {
 
   void _handleChanged(double? value) {
     setState(() => _value = value);
-    if (widget.onChanged != null) widget.onChanged!(value);
+    widget.onChanged?.call(value);
   }
 
   @override

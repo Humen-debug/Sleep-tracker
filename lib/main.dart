@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:sleep_tracker/logger/logger.dart';
 import 'package:sleep_tracker/providers/auth/auth_provider.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/theme_data.dart';
@@ -24,8 +25,9 @@ class _MyAppState extends ConsumerState<MyApp> {
   Future<bool> _initialize(BuildContext context) async {
     try {
       await ref.read(authStateProvider.notifier).init();
-    } catch (e) {
-      debugPrint('Authentication State init Error: $e');
+    } catch (e, s) {
+      AppLogger.I.e('Authentication State init Error', error: e, stackTrace: s);
+
       rethrow;
     }
     return true;

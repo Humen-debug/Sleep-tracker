@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 
 import 'package:sleep_tracker/pages/home/enter_bedtime.dart';
+import 'package:sleep_tracker/pages/home/enter_feeling.dart';
 import 'package:sleep_tracker/pages/home/index.dart';
 import 'package:sleep_tracker/pages/main.dart';
 import 'package:sleep_tracker/pages/plans.dart';
@@ -36,5 +37,6 @@ class AppRouter extends _$AppRouter {
         AutoRoute(page: ProfileRoute.page),
         AutoRoute(page: AlarmSettingRoute.page),
         AutoRoute(page: EnterBedtimeRoute.page),
+        AutoRoute(page: EnterFeelingRoute.page),
       ];
 }

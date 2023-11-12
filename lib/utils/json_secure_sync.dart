@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sleep_tracker/logger/logger.dart';
 
 AndroidOptions _getAndroidOptions() => const AndroidOptions(
       encryptedSharedPreferences: true,
@@ -29,7 +29,7 @@ class JsonSecureSync {
     await tryMigrate(key: key);
     final jsonString = await storage.read(key: key);
     if (jsonString == null) {
-      debugPrint('Unable to read for key: $key');
+      AppLogger.I.i('Unable to read for key: $key');
 
       return null;
     }
@@ -56,6 +56,6 @@ class JsonSecureSync {
     }
     await storage.write(key: key, value: jsonString);
     await prefs.remove(key);
-    debugPrint('Migrated $key to KeyChain.');
+    AppLogger.I.d('Migrated $key to KeyChain.');
   }
 }
