@@ -101,7 +101,7 @@ class _SleepDiaryPageState extends State<SleepDiaryPage> {
             padding: const EdgeInsets.symmetric(vertical: Style.spacingLg),
             child: _TimeSlotChart(
               range: DateTimeRange(
-                  start: DateUtils.dateOnly(date.subtract(Duration(days: 1))).copyWith(hour: 7),
+                  start: DateUtils.dateOnly(date.subtract(const Duration(days: 1))).copyWith(hour: 7),
                   end: DateUtils.dateOnly(date).copyWith(hour: 14)),
               slots: [
                 DateTimeRange(
@@ -109,8 +109,8 @@ class _SleepDiaryPageState extends State<SleepDiaryPage> {
                   end: date.copyWith(hour: 14),
                 ),
                 DateTimeRange(
-                  start: DateUtils.dateOnly(date.subtract(Duration(days: 1))).copyWith(hour: 15),
-                  end: DateUtils.dateOnly(date.subtract(Duration(days: 1))).copyWith(hour: 15, minute: 20),
+                  start: DateUtils.dateOnly(date.subtract(const Duration(days: 1))).copyWith(hour: 15),
+                  end: DateUtils.dateOnly(date.subtract(const Duration(days: 1))).copyWith(hour: 15, minute: 20),
                 )
               ],
             ),
@@ -118,9 +118,9 @@ class _SleepDiaryPageState extends State<SleepDiaryPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              SleepPhaseBlock(color: Style.highlightGold, title: 'Awake', desc: '3%'),
+              const SleepPhaseBlock(color: Style.highlightGold, title: 'Awake', desc: '3%'),
               SleepPhaseBlock(color: Theme.of(context).primaryColor, title: 'Sleep', desc: '74%'),
-              SleepPhaseBlock(color: Style.highlightPurple, title: 'Deep Sleep', desc: '23%'),
+              const SleepPhaseBlock(color: Style.highlightPurple, title: 'Deep Sleep', desc: '23%'),
             ],
           )
         ],
@@ -136,7 +136,7 @@ class _SleepDiaryPageState extends State<SleepDiaryPage> {
         padding: const EdgeInsets.only(bottom: kBottomNavigationBarHeight),
         child: FloatingActionButton(
           onPressed: () {
-            _scrollController.animateTo(0, duration: Duration(milliseconds: 500), curve: Curves.easeInOut);
+            _scrollController.animateTo(0, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
           },
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 8,
@@ -234,7 +234,7 @@ class _TimeSlotChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextStyle textStyle = TextStyle(fontWeight: FontWeight.w300);
+    const TextStyle textStyle = TextStyle(fontWeight: FontWeight.w300);
     return Row(children: [
       Text(DateFormat.Hm().format(range.start), style: textStyle),
       const SizedBox(width: Style.spacingXs),

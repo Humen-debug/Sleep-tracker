@@ -83,7 +83,7 @@ class _AlarmSettingPageState extends State<AlarmSettingPage> {
           Container(
               padding: const EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingMd),
               child: SizedBox(
-                  width: double.infinity, child: ElevatedButton(onPressed: _handleOnSaved, child: Text('Save'))))
+                  width: double.infinity, child: ElevatedButton(onPressed: _handleOnSaved, child: const Text('Save'))))
         ],
       ),
     );

@@ -61,7 +61,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                           label: 'Password',
                           controller: _pwController,
                           obscureText: _hidePassword,
-                          decoration: InputDecoration(errorMaxLines: 2),
+                          decoration: const InputDecoration(errorMaxLines: 2),
                           trailing: InkResponse(
                             onTap: () => setState(() => _hidePassword = !_hidePassword),
                             child: _hidePassword
@@ -75,7 +75,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                           label: 'New Password',
                           controller: _newPwController,
                           obscureText: _hideNewPassword,
-                          decoration: InputDecoration(errorMaxLines: 2),
+                          decoration: const InputDecoration(errorMaxLines: 2),
                           trailing: InkResponse(
                             onTap: () => setState(() => _hideNewPassword = !_hideNewPassword),
                             child: _hideNewPassword
@@ -104,7 +104,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           Container(
               padding: const EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingMd),
               child: SizedBox(
-                  width: double.infinity, child: ElevatedButton(onPressed: _handleOnSaved, child: Text('Save'))))
+                  width: double.infinity, child: ElevatedButton(onPressed: _handleOnSaved, child: const Text('Save'))))
         ],
       ),
     );

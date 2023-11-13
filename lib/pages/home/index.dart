@@ -366,7 +366,7 @@ class _ProfileStatusBar extends ConsumerWidget {
 }
 
 class _TodayMoodBoard extends StatefulWidget {
-  const _TodayMoodBoard({super.key, this.initialValue, this.onChanged});
+  const _TodayMoodBoard({this.initialValue, this.onChanged});
   final double? initialValue;
   final ValueChanged<double?>? onChanged;
 
@@ -466,7 +466,7 @@ class __TodayMoodBoardState extends State<_TodayMoodBoard> {
 }
 
 class _SleepCycleChart extends ConsumerStatefulWidget {
-  const _SleepCycleChart({super.key});
+  const _SleepCycleChart();
 
   @override
   ConsumerState<_SleepCycleChart> createState() => _SleepCycleChartState();
@@ -716,9 +716,9 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                SleepPhaseBlock(color: Style.highlightGold, title: 'Awake', desc: '3%'),
+                const SleepPhaseBlock(color: Style.highlightGold, title: 'Awake', desc: '3%'),
                 SleepPhaseBlock(color: Theme.of(context).primaryColor, title: 'Sleep', desc: '74%'),
-                SleepPhaseBlock(color: Style.highlightPurple, title: 'Deep Sleep', desc: '23%'),
+                const SleepPhaseBlock(color: Style.highlightPurple, title: 'Deep Sleep', desc: '23%'),
               ],
             ),
           ),

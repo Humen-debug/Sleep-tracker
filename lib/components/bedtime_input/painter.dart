@@ -263,7 +263,6 @@ class _TimerPainter extends CustomPainter {
     required this.graduationColor,
     required this.circleSpacing,
     required this.graduationLength,
-    this.graduationTextStyle,
   });
 
   /// [selectedRange] determines the initial position of two input buttons.
@@ -278,8 +277,6 @@ class _TimerPainter extends CustomPainter {
 
   /// [graduationLength] determines the rendering length of graduation.
   final double graduationLength;
-
-  final TextStyle? graduationTextStyle;
 
   /// [strokeWidth] determines the border width of outmost circle.
   final double strokeWidth;
@@ -370,7 +367,7 @@ class _TimerPainter extends CustomPainter {
       if (i % 30 == 0) {
         // Draw hour on canvas.
 
-        final TextStyle textStyle = graduationTextStyle ?? TextStyle(fontSize: 14, color: graduationColor);
+        final TextStyle textStyle = TextStyle(fontSize: 14, color: graduationColor);
         final fontSize = textStyle.fontSize ?? 14.0;
         final double textScale = fontSize / 14.0;
         double size = 24.0 * textScale;

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:sleep_tracker/components/sleep_timer.dart';
-import 'package:sleep_tracker/components/sleep_timer/timer_paint.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
 /// [SleepTimer] draws a timer/stopwatch of sleep events duration.

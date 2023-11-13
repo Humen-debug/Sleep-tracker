@@ -293,7 +293,7 @@ class __YearItemState extends State<_YearItem> {
           ),
         ),
         ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: gridHeight),
+          constraints: const BoxConstraints(maxHeight: gridHeight),
           child: GridView.custom(
             gridDelegate: _yearItemGridDelegate,
             shrinkWrap: true,

@@ -49,14 +49,14 @@ class _SettingsPageState extends State<SettingsPage> {
               padding: const EdgeInsets.symmetric(vertical: Style.spacingLg),
               child: Row(
                 children: [
-                  CircleAvatar(backgroundColor: Style.grey3, radius: 32),
+                  const CircleAvatar(backgroundColor: Style.grey3, radius: 32),
                   const SizedBox(width: Style.spacingSm),
                   Expanded(
                       child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text("Your Name", style: TextStyle(fontWeight: FontWeight.w600)),
+                      const Text("Your Name", style: TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: Style.spacingXxs),
                       Text('user@email.com', style: Theme.of(context).textTheme.labelSmall)
                     ],
@@ -68,13 +68,13 @@ class _SettingsPageState extends State<SettingsPage> {
                           minimumSize: const MaterialStatePropertyAll(Size(64, 32)),
                           padding: const MaterialStatePropertyAll(
                               EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingSm))),
-                      child: Text('Edit'))
+                      child: const Text('Edit'))
                 ],
               ),
             ),
             const SizedBox(height: Style.spacingMd),
             ListTile(
-              title: Text('Sleep Diary'),
+              title: const Text('Sleep Diary'),
               onTap: () => context.pushRoute(const SleepDiaryRoute()),
               leading: SvgPicture.asset('assets/icons/diary.svg', color: Theme.of(context).primaryColor),
               trailing: SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1, width: 24, height: 24),
@@ -95,7 +95,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               child: Column(children: [
                 ListTile(
-                  title: Text('Silence alarm when system sound is off'),
+                  title: const Text('Silence alarm when system sound is off'),
                   trailing: CupertinoSwitch(
                     value: silenceAsSystem,
                     onChanged: (v) => setState(() => silenceAsSystem = v),
@@ -105,7 +105,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 divider,
                 ListTile(
                   onTap: () => context.pushRoute(const AlarmSettingRoute()),
-                  title: Text('Alarm Sound'),
+                  title: const Text('Alarm Sound'),
                   subtitle: Text(
                     'Puddles',
                     style: TextStyle(color: Theme.of(context).primaryColor),
@@ -118,7 +118,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 divider,
                 ListTile(
-                  title: Text('Snooze'),
+                  title: const Text('Snooze'),
                   subtitle: Text(
                     '5 minutes',
                     style: TextStyle(color: Theme.of(context).primaryColor),
@@ -147,19 +147,19 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               child: Column(children: [
                 ListTile(
-                  title: Text('About Us'),
+                  title: const Text('About Us'),
                   trailing:
                       SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1, width: 24, height: 24),
                 ),
                 divider,
                 ListTile(
-                  title: Text('Terms of Use'),
+                  title: const Text('Terms of Use'),
                   trailing:
                       SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1, width: 24, height: 24),
                 ),
                 divider,
                 ListTile(
-                  title: Text('Privacy'),
+                  title: const Text('Privacy'),
                   trailing:
                       SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1, width: 24, height: 24),
                 ),
@@ -172,7 +172,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: Style.spacingXxl),
             ListTile(
-              title: Text('Logout'),
+              title: const Text('Logout'),
               leading: SvgPicture.asset('assets/icons/logout.svg', color: Theme.of(context).primaryColor),
               trailing: SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1, width: 24, height: 24),
             ),

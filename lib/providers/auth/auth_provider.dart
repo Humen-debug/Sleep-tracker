@@ -69,7 +69,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Set up a stream listener to the user's accelerometer event.
   /// If there any event comes and user is sleeping (i.e. [state.sleepStatus] == [SleepStatus.sleeping])
   /// update the current sleep activities.
-
+  ///
+  /// Sleep-wake algorithm research on https://charm-icebreaker-7a6.notion.site/Sleep-Tracker-Research-c27e9d0bfc6d474395d76bcf9c01f4a0?pvs=4.
   void initSensors() {
     AppLogger.I.i('Initiate subscriptions');
 

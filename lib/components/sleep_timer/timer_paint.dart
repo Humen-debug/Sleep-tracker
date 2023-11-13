@@ -59,14 +59,14 @@ class TimerPaint extends StatelessWidget {
           return CustomPaint(
             size: canvasSize ?? Size.square(radius * 2 + strokeWidth),
             painter: _TimerPainter(
-              progress: progress,
-              backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.tertiary,
-              activeColor: activeColor ?? Style.highlightGold,
-              strokeWidth: strokeWidth,
-              radius: radius,
-              indicatorIcon: showIndicator ? snapshot.data : null,
-              reversed: reversed,
-            ),
+                progress: progress,
+                backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.tertiary,
+                activeColor: activeColor ?? Style.highlightGold,
+                strokeWidth: strokeWidth,
+                radius: radius,
+                indicatorIcon: showIndicator ? snapshot.data : null,
+                reversed: reversed,
+                indicatorSize: 12),
           );
         });
   }
@@ -79,8 +79,8 @@ class _TimerPainter extends CustomPainter {
     required this.activeColor,
     this.strokeWidth = 40,
     this.radius = 100,
+    required this.indicatorSize,
     this.indicatorIcon,
-    this.indicatorSize = 12,
     this.reversed = false,
   });
 

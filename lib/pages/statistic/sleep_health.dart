@@ -125,7 +125,7 @@ class _SleepHealthPageState extends State<SleepHealthPage> {
                   children: [
                     Text(data.toString(), style: dataTextTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(width: Style.spacingSm),
-                    _TrendIndicator(value: Random().nextDouble())
+                    _TrendIndicator(value: Random().nextDouble(), indicatorColor: Style.highlightGold)
                   ],
                 ),
               ],
@@ -201,7 +201,7 @@ class _SleepHealthPageState extends State<SleepHealthPage> {
                     style: dataTextTheme.displayMedium?.copyWith(fontWeight: FontWeight.w600, color: Style.grey1),
                   ),
                   const SizedBox(width: Style.spacingXxs),
-                  _TrendIndicator(value: 0.21)
+                  _TrendIndicator(value: 0.21, indicatorColor: Style.highlightGold)
                 ],
               ),
             ))
@@ -284,7 +284,7 @@ class _SleepHealthPageState extends State<SleepHealthPage> {
 class _TrendIndicator extends StatelessWidget {
   _TrendIndicator({
     required this.value,
-    this.indicatorColor = Style.highlightGold,
+    required this.indicatorColor,
     this.rangeConditions = const [],
   })  : assert(value >= -1.0 && value <= 1.0),
         assert(rangeConditions.isEmpty || rangeConditions.length == 2);
