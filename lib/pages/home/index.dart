@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:sensors_plus/sensors_plus.dart';
+
 import 'package:sleep_tracker/components/dash_line.dart';
 import 'package:sleep_tracker/components/line_chart.dart';
 import 'package:sleep_tracker/components/moods/daily_mood.dart';
@@ -16,7 +16,6 @@ import 'package:sleep_tracker/components/moods/mood_picker.dart';
 import 'package:sleep_tracker/components/moods/utils.dart';
 import 'package:sleep_tracker/components/sleep_phase_block.dart';
 import 'package:sleep_tracker/components/sleep_timer.dart';
-import 'package:sleep_tracker/components/sleep_timer/timer_paint.dart';
 import 'package:sleep_tracker/logger/logger.dart';
 import 'package:sleep_tracker/models/sleep_record.dart';
 import 'package:sleep_tracker/models/user.dart';
@@ -40,8 +39,7 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   // dev use
   bool alarmOn = true;
-  late final StreamSubscription _accelerometerSub;
-  Map<DateTime, UserAccelerometerEvent> _accelerationEvents = {};
+
   final DateTime _now = DateTime.now();
   late final SleepTimerController _sleepTimerCont = SleepTimerController();
 
@@ -49,16 +47,10 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _initTimer();
-    _accelerometerSub = userAccelerometerEvents.listen((event) {
-      setState(() {
-        _accelerationEvents[DateTime.now()] = event;
-      });
-    });
   }
 
   @override
   void dispose() {
-    _accelerometerSub.cancel();
     super.dispose();
   }
 
