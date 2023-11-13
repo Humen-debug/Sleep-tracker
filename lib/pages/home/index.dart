@@ -1,11 +1,14 @@
-import 'dart:math';
+import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:auto_route/auto_route.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 import 'package:sleep_tracker/components/dash_line.dart';
 import 'package:sleep_tracker/components/line_chart.dart';
 import 'package:sleep_tracker/components/moods/daily_mood.dart';
@@ -13,11 +16,13 @@ import 'package:sleep_tracker/components/moods/mood_picker.dart';
 import 'package:sleep_tracker/components/moods/utils.dart';
 import 'package:sleep_tracker/components/sleep_phase_block.dart';
 import 'package:sleep_tracker/components/sleep_timer.dart';
+import 'package:sleep_tracker/components/sleep_timer/timer_paint.dart';
 import 'package:sleep_tracker/logger/logger.dart';
 import 'package:sleep_tracker/models/sleep_record.dart';
 import 'package:sleep_tracker/models/user.dart';
 import 'package:sleep_tracker/providers/auth_provider.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
+import 'package:sleep_tracker/utils/date_time.dart';
 import 'package:sleep_tracker/utils/string.dart';
 import 'package:sleep_tracker/utils/style.dart';
 import 'package:sleep_tracker/utils/theme_data.dart';
@@ -35,14 +40,26 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   // dev use
   bool alarmOn = true;
+  late final StreamSubscription _accelerometerSub;
+  Map<DateTime, UserAccelerometerEvent> _accelerationEvents = {};
   final DateTime _now = DateTime.now();
-
   late final SleepTimerController _sleepTimerCont = SleepTimerController();
 
   @override
   void initState() {
     super.initState();
     _initTimer();
+    _accelerometerSub = userAccelerometerEvents.listen((event) {
+      setState(() {
+        _accelerationEvents[DateTime.now()] = event;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _accelerometerSub.cancel();
+    super.dispose();
   }
 
   void _initTimer() {
@@ -314,6 +331,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             divider,
             DailyMood(firstDate: firstDate, monthlyMoods: auth.monthlyMoods),
             divider,
+
             const SizedBox(height: kBottomNavigationBarHeight),
           ],
         ),
@@ -455,11 +473,109 @@ class __TodayMoodBoardState extends State<_TodayMoodBoard> {
   }
 }
 
-class _SleepCycleChart extends StatelessWidget {
+class _SleepCycleChart extends ConsumerStatefulWidget {
   const _SleepCycleChart({super.key});
 
   @override
+  ConsumerState<_SleepCycleChart> createState() => _SleepCycleChartState();
+}
+
+class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
+  late final DateTime _firstDate;
+
+  late int _dayIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    final DateTime now = DateTime.now();
+    _firstDate = DateTimeUtils.mostRecentWeekday(now, 0);
+    _dayIndex = now.difference(_firstDate).inDays;
+  }
+
+  /// Returns the sleepRecords by given dayIndex.
+  Iterable<SleepRecord> getDayRecords(int dayIndex) {
+    final date = DateUtils.addDaysToDate(_firstDate, dayIndex);
+    return ref
+        .watch(authStateProvider)
+        .sleepRecords
+        .skipWhile((record) => !DateUtils.isSameDay(record.start, date))
+        .takeWhile((record) => DateUtils.isSameDay(record.start, date))
+        .toList()
+        .reversed;
+  }
+
+  Widget _buildWeekdayButton(int index) {
+    final DateTime day = DateUtils.addDaysToDate(_firstDate, index);
+    final Iterable<SleepRecord> dayRecords = getDayRecords(index);
+    final DateTime now = DateTime.now();
+
+    final double totalSleepSeconds = dayRecords.fold(0.0, (previousValue, record) {
+      final DateTime? wakeUpAt = record.wakeUpAt;
+      final DateTime start = record.start;
+      DateTime end = record.end;
+      end = wakeUpAt ?? (end.isAfter(now) ? now : end);
+      return previousValue + end.difference(start).inSeconds;
+    });
+
+    final double progress = math.min(totalSleepSeconds / (24 * 3600), 1.0);
+    final bool isDisabled = !(now.isAfter(day));
+    final bool isSelected = _dayIndex == index;
+    final ThemeData themeData = Theme.of(context);
+
+    return GestureDetector(
+      onTap: isDisabled
+          ? null
+          : () {
+              setState(() => _dayIndex = index);
+            },
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Center(
+            child: Text(
+              DateFormat.E().format(day).substring(0, 1),
+              style: themeData.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? themeData.colorScheme.onSurface : themeData.colorScheme.secondary),
+            ),
+          ),
+          TimerPaint(progress: progress, radius: 16.0, strokeWidth: 8, showIndicator: false),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final Iterable<SleepEvent> sleepEvents = getDayRecords(_dayIndex).expand((record) => record.events);
+    const Duration interval = Duration(minutes: 30);
+    final DateTime? end = sleepEvents.lastOrNull?.time;
+    final List<Point<DateTime, double>> sleepEventType = [];
+    final List<Point<DateTime, double>> sleepEventIntensity = [];
+
+    if (end != null) {
+      /// Returns sleep events for every record. Only return event per 30 minutes so that the
+      /// line chart is not packed with data.
+      for (DateTime start = sleepEvents.first.time; true; start = start.add(interval)) {
+        if (start.isAfter(end)) break;
+        final events = sleepEvents
+            .skipWhile((event) => event.time.isBefore(start))
+            .takeWhile((event) => !event.time.isAfter(start.add(interval)));
+
+        double meanType = SleepType.awaken.value.toDouble();
+        double meanIntensity = sleepIndex0;
+        if (events.isNotEmpty) {
+          meanType = events.map((e) => e.intensity).average;
+          meanIntensity = events.map((e) => e.type.value).average;
+        }
+        sleepEventType.add(Point(start, meanType));
+        sleepEventIntensity.add(Point(start, meanIntensity));
+      }
+    }
+
+    final DateTime? earliest = getDayRecords(_dayIndex).firstOrNull?.start;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Style.spacingMd),
       child: Column(
@@ -504,16 +620,67 @@ class _SleepCycleChart extends StatelessWidget {
             ],
           ),
           const SizedBox(height: Style.spacingLg),
-          SizedBox(
-            height: 203,
-            child: LineChart(
-              data: List.generate(6, (index) => Random().nextDouble() * 100),
-              gradientColors: [
-                Theme.of(context).primaryColor.withOpacity(0.8),
-                Theme.of(context).primaryColor.withOpacity(0.1),
-              ],
-              getYTitles: (value) => value.round().toString(),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(DateTime.daysPerWeek, _buildWeekdayButton),
+          ),
+          const SizedBox(height: Style.spacingMd),
+          LineChart<DateTime, num>(
+            data: sleepEventType,
+            getSpot: (x, y) {
+              final int min = earliest?.millisecondsSinceEpoch ?? 0;
+              return Point((x.millisecondsSinceEpoch - min).toDouble(), y.toDouble());
+            },
+            gradientColors: [
+              Theme.of(context).primaryColor.withOpacity(0.8),
+              Theme.of(context).primaryColor.withOpacity(0.1),
+            ],
+            getYTitles: (value) {
+              int index = value.round();
+
+              if (index >= 9) {
+                return 'Awake';
+              } else if (index == 4) {
+                return 'Sleep';
+              } else if (index == 2) {
+                return 'Deep Sleep';
+              }
+              return '';
+            },
+            getXTitles: (value) {
+              // value here is the difference of millisecondSinceEpoch between earliest and data.
+              // Restore and return the millisecondSinceEpoch of data.
+              final int milliSecond = value.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
+              return DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
+            },
+            minY: 0,
+            maxY: 9,
+            chartHeight: 203,
+          ),
+          // DEV
+          Text("DEV: Sleep Intensity", style: Theme.of(context).textTheme.headlineSmall),
+          LineChart<DateTime, num>(
+            data: sleepEventIntensity,
+            getSpot: (x, y) {
+              final int min = earliest?.millisecondsSinceEpoch ?? 0;
+              return Point((x.millisecondsSinceEpoch - min).toDouble(), y.toDouble());
+            },
+            gradientColors: [
+              Theme.of(context).primaryColor.withOpacity(0.8),
+              Theme.of(context).primaryColor.withOpacity(0.1),
+            ],
+            getYTitles: (value) {
+              return value.toStringAsFixed(2);
+            },
+            getXTitles: (value) {
+              // value here is the difference of millisecondSinceEpoch between earliest and data.
+              // Restore and return the millisecondSinceEpoch of data.
+              final int milliSecond = value.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
+              return DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
+            },
+            minY: 0,
+            baseLineY: 1,
+            chartHeight: 203,
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(Style.spacingMd, Style.spacingXs, Style.spacingMd, Style.spacingMd),
@@ -542,9 +709,11 @@ class _SleepCycleChart extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Style.grey3),
                       textAlign: TextAlign.end,
                     ),
-                    Text('97%',
-                        style: dataTextTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                        textAlign: TextAlign.end)
+                    Text(
+                      '97%',
+                      style: dataTextTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      textAlign: TextAlign.end,
+                    )
                   ],
                 )),
               ],

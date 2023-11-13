@@ -233,7 +233,7 @@ class _SleepHealthPageState extends State<SleepHealthPage> {
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 186),
               child: LineChart(
-                data: data,
+                data: List.generate(data.length, (index) => Point(index, data[index])),
                 color: Style.highlightGold,
                 gradientColors: [Style.highlightGold.withOpacity(0.8), Style.highlightGold.withOpacity(0.1)],
 

@@ -379,11 +379,10 @@ mixin _$SleepEvent {
   String? get id => throw _privateConstructorUsedError;
 
   /// Intensity of movement event.
-  /// 9: None(Awaken), 1: Lowest(Deep sleep) and 2: Highest(Sleep)
-  int get intensity => throw _privateConstructorUsedError;
+  double get intensity => throw _privateConstructorUsedError;
 
   /// Movement event log date/time.
-  DateTime? get time => throw _privateConstructorUsedError;
+  DateTime get time => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -397,7 +396,7 @@ abstract class $SleepEventCopyWith<$Res> {
           SleepEvent value, $Res Function(SleepEvent) then) =
       _$SleepEventCopyWithImpl<$Res, SleepEvent>;
   @useResult
-  $Res call({String? id, int intensity, DateTime? time});
+  $Res call({String? id, double intensity, DateTime time});
 }
 
 /// @nodoc
@@ -415,7 +414,7 @@ class _$SleepEventCopyWithImpl<$Res, $Val extends SleepEvent>
   $Res call({
     Object? id = freezed,
     Object? intensity = null,
-    Object? time = freezed,
+    Object? time = null,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -425,11 +424,11 @@ class _$SleepEventCopyWithImpl<$Res, $Val extends SleepEvent>
       intensity: null == intensity
           ? _value.intensity
           : intensity // ignore: cast_nullable_to_non_nullable
-              as int,
-      time: freezed == time
+              as double,
+      time: null == time
           ? _value.time
           : time // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+              as DateTime,
     ) as $Val);
   }
 }
@@ -442,7 +441,7 @@ abstract class _$$SleepEventImplCopyWith<$Res>
       __$$SleepEventImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String? id, int intensity, DateTime? time});
+  $Res call({String? id, double intensity, DateTime time});
 }
 
 /// @nodoc
@@ -458,7 +457,7 @@ class __$$SleepEventImplCopyWithImpl<$Res>
   $Res call({
     Object? id = freezed,
     Object? intensity = null,
-    Object? time = freezed,
+    Object? time = null,
   }) {
     return _then(_$SleepEventImpl(
       id: freezed == id
@@ -468,19 +467,20 @@ class __$$SleepEventImplCopyWithImpl<$Res>
       intensity: null == intensity
           ? _value.intensity
           : intensity // ignore: cast_nullable_to_non_nullable
-              as int,
-      time: freezed == time
+              as double,
+      time: null == time
           ? _value.time
           : time // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+              as DateTime,
     ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$SleepEventImpl implements _SleepEvent {
-  const _$SleepEventImpl({this.id, required this.intensity, this.time});
+class _$SleepEventImpl extends _SleepEvent {
+  const _$SleepEventImpl({this.id, required this.intensity, required this.time})
+      : super._();
 
   factory _$SleepEventImpl.fromJson(Map<String, dynamic> json) =>
       _$$SleepEventImplFromJson(json);
@@ -489,13 +489,12 @@ class _$SleepEventImpl implements _SleepEvent {
   final String? id;
 
   /// Intensity of movement event.
-  /// 9: None(Awaken), 1: Lowest(Deep sleep) and 2: Highest(Sleep)
   @override
-  final int intensity;
+  final double intensity;
 
   /// Movement event log date/time.
   @override
-  final DateTime? time;
+  final DateTime time;
 
   @override
   String toString() {
@@ -531,11 +530,12 @@ class _$SleepEventImpl implements _SleepEvent {
   }
 }
 
-abstract class _SleepEvent implements SleepEvent {
+abstract class _SleepEvent extends SleepEvent {
   const factory _SleepEvent(
       {final String? id,
-      required final int intensity,
-      final DateTime? time}) = _$SleepEventImpl;
+      required final double intensity,
+      required final DateTime time}) = _$SleepEventImpl;
+  const _SleepEvent._() : super._();
 
   factory _SleepEvent.fromJson(Map<String, dynamic> json) =
       _$SleepEventImpl.fromJson;
@@ -545,12 +545,11 @@ abstract class _SleepEvent implements SleepEvent {
   @override
 
   /// Intensity of movement event.
-  /// 9: None(Awaken), 1: Lowest(Deep sleep) and 2: Highest(Sleep)
-  int get intensity;
+  double get intensity;
   @override
 
   /// Movement event log date/time.
-  DateTime? get time;
+  DateTime get time;
   @override
   @JsonKey(ignore: true)
   _$$SleepEventImplCopyWith<_$SleepEventImpl> get copyWith =>

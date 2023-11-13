@@ -145,7 +145,7 @@ class _StatisticPageState extends State<StatisticPage> {
               constraints: const BoxConstraints(maxHeight: 186),
               child: (!_isBarChart[index])
                   ? LineChart(
-                      data: _dataGroups[index],
+                      data: List.generate(_dataGroups[index].length, (i) => Point(i, _dataGroups[index][i])),
                       color: _chartColors[index],
                       gradientColors: [_chartColors[index].withOpacity(0.8), _chartColors[index].withOpacity(0.1)],
 

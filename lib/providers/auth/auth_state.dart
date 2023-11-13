@@ -47,7 +47,7 @@ class AuthState with _$AuthState implements PersistentState<AuthState> {
     for (int i = sleepRecords.length - 1; i >= 0; i--) {
       final record = sleepRecords[i];
       // Depends the mood value by sleep end time.
-      final date = DateUtils.dateOnly(record.end);
+      final date = DateUtils.dateOnly(record.wakeUpAt ?? record.end);
       final double? value = record.sleepQuality;
       if (value != null) count++;
       if (dailyAvgMood.containsKey(date)) {

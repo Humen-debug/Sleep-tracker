@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'sleep_record.freezed.dart';
@@ -58,12 +59,37 @@ class SleepEvent with _$SleepEvent {
     String? id,
 
     /// Intensity of movement event.
-    /// 9: None(Awaken), 1: Lowest(Deep sleep) and 2: Highest(Sleep)
-    required int intensity,
+    required double intensity,
 
     /// Movement event log date/time.
-    DateTime? time,
+    required DateTime time,
   }) = _SleepEvent;
+  const SleepEvent._();
 
   factory SleepEvent.fromJson(Map<String, Object?> json) => _$SleepEventFromJson(json);
+
+  /// 9: None(Awaken), 1: Lowest(Deep sleep) and 3: Highest(Sleep)
+  /// Currently threshold to determine the sleep stage is 1.
+  SleepType get type => intensity >= math.exp(1)
+      ? SleepType.awaken
+      : intensity > 1
+          ? SleepType.sleep
+          : SleepType.deepSleep;
 }
+
+enum SleepType { awaken, sleep, deepSleep }
+
+extension SleepTypeExtension on SleepType {
+  int get value {
+    switch (this) {
+      case SleepType.awaken:
+        return 9;
+      case SleepType.sleep:
+        return 3;
+      case SleepType.deepSleep:
+        return 1;
+    }
+  }
+}
+
+const sleepIndex0 = math.e;

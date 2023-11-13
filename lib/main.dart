@@ -34,6 +34,12 @@ class _MyAppState extends ConsumerState<MyApp> {
   }
 
   @override
+  void dispose() {
+    ref.read(authStateProvider.notifier).dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder(
         future: _initialize(context),

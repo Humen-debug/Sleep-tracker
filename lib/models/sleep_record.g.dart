@@ -36,14 +36,13 @@ Map<String, dynamic> _$$SleepRecordImplToJson(_$SleepRecordImpl instance) =>
 _$SleepEventImpl _$$SleepEventImplFromJson(Map<String, dynamic> json) =>
     _$SleepEventImpl(
       id: json['id'] as String?,
-      intensity: json['intensity'] as int,
-      time:
-          json['time'] == null ? null : DateTime.parse(json['time'] as String),
+      intensity: (json['intensity'] as num).toDouble(),
+      time: DateTime.parse(json['time'] as String),
     );
 
 Map<String, dynamic> _$$SleepEventImplToJson(_$SleepEventImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'intensity': instance.intensity,
-      'time': instance.time?.toIso8601String(),
+      'time': instance.time.toIso8601String(),
     };
