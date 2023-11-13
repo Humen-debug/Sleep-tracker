@@ -1,13 +1,17 @@
-import 'dart:math';
-
 import 'package:auto_route/auto_route.dart';
+import 'package:collection/collection.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:sleep_tracker/components/bar_chart.dart';
-import 'package:sleep_tracker/components/line_chart.dart';
+
+import 'package:sleep_tracker/components/charts/bar_chart.dart';
+// import 'package:sleep_tracker/components/charts/line_chart.dart';
 import 'package:sleep_tracker/components/period_pickers.dart';
 import 'package:sleep_tracker/components/sleep_period_tab_bar.dart';
+import 'package:sleep_tracker/models/sleep_record.dart';
+import 'package:sleep_tracker/providers/sleep_records_provider.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/date_time.dart';
 import 'package:sleep_tracker/utils/style.dart';
@@ -16,14 +20,14 @@ const double _tabRowHeight = 50.0;
 const double _appBarHeight = _tabRowHeight + Style.spacingMd * 2;
 
 @RoutePage()
-class StatisticPage extends StatefulWidget {
+class StatisticPage extends ConsumerStatefulWidget {
   const StatisticPage({super.key});
 
   @override
-  State<StatisticPage> createState() => _StatisticPageState();
+  ConsumerState<StatisticPage> createState() => _StatisticPageState();
 }
 
-class _StatisticPageState extends State<StatisticPage> {
+class _StatisticPageState extends ConsumerState<StatisticPage> {
   late final ButtonStyle? _elevationButtonStyle = Theme.of(context).elevatedButtonTheme.style?.copyWith(
       backgroundColor: MaterialStateProperty.resolveWith<Color>(
         (states) {
@@ -44,10 +48,11 @@ class _StatisticPageState extends State<StatisticPage> {
   final List<bool> _inRange = [false, true, true];
 
   int _tabIndex = 0;
+  static const int _chartLength = 6;
 
-  /// Friday of this week as the last date.
-  final DateTime lastDate = DateTimeUtils.mostNearestWeekday(DateTime.now(), 6);
-  final DateTime firstDate = DateTime.now().subtract(const Duration(days: 365)).copyWith(day: 1);
+  /// Initially, set Friday of this week as the last date.
+  late final DateTime lastDate;
+  late final DateTime firstDate;
 
   bool get _isDisplayingFirstDate => !selectedRange.start.isAfter(firstDate);
   bool get _isDisplayingLastDate => !selectedRange.end.isBefore(lastDate);
@@ -55,43 +60,73 @@ class _StatisticPageState extends State<StatisticPage> {
   late DateTimeRange selectedRange =
       DateTimeRange(start: DateTimeUtils.mostRecentWeekday(DateTime.now(), 0), end: lastDate);
 
-  // dev use
-  final List<String> _titles = ['Sleep Health', 'Sleep Duration', 'Most Asleep Time', 'Went to Sleep', 'Sleep Quality'];
-  final List<bool> _hasMore = [true, false, false, false, false];
-  final List<bool> _isBarChart = [false, true, true, false, false];
-  late final List<List<double>> _dataGroups =
-      List.generate(5, (index) => List.generate(DateTime.daysPerWeek, (day) => Random().nextDouble() * 100));
-  late final List<Color> _chartColors = [
-    Style.highlightGold,
-    Theme.of(context).primaryColor,
-    Theme.of(context).primaryColor,
-    Style.highlightPurple,
-    Style.successColor
-  ];
-
-  void _handleTabChanged(int index) {
-    setState(() => _tabIndex = index);
+  @override
+  void initState() {
+    super.initState();
+    final DateTime now = DateTime.now();
+    firstDate = DateUtils.dateOnly(now.subtract(const Duration(days: 365)).copyWith(day: 1));
+    lastDate = DateUtils.dateOnly(DateTimeUtils.mostNearestWeekday(now, 6));
   }
 
-  void _handlePreviousPeriod() {
-    if (!_isDisplayingFirstDate) {
-      switch (_tabIndex) {
-        // According to the PeriodPickerMode. 0 index refers to the "DAYS"
-        // selection, which has constant 7-day per week as range.
-        case 0:
-          break;
-        case 1:
-        case 2:
-        default:
+  void _handleTabChanged(int index) {
+    final DateTime end = selectedRange.end;
+    DateTime start;
+    setState(() {
+      _tabIndex = index;
+      if (_tabIndex == 0) {
+        start = DateUtils.addDaysToDate(end, -_chartLength);
+      } else if (_tabIndex == 1) {
+        start = DateUtils.addDaysToDate(end, -(DateTime.daysPerWeek * _chartLength) + 1);
+      } else {
+        start = DateUtils.addMonthsToMonthDate(end, -_chartLength);
       }
+      selectedRange = DateTimeRange(start: start, end: end);
+    });
+  }
+
+  /// Shift [selectedRange] to previous intervals based on [_tabIndex]
+  void _handlePreviousPeriod() {
+    DateTimeRange range;
+    if (_tabIndex == 0) {
+      // According to the PeriodPickerMode. 0 index refers to the "DAYS"
+      // selection, which has constant 7-day per week as range.
+      range = DateTimeUtils.shiftDaysToRange(selectedRange, -DateTime.daysPerWeek);
+    } else if (_tabIndex == 1) {
+      range = DateTimeUtils.shiftDaysToRange(selectedRange, -(_chartLength * DateTime.daysPerWeek));
+    } else {
+      range = DateTimeUtils.shiftMonthsToRange(selectedRange, -_chartLength);
     }
+
+    if (range.start.isBefore(firstDate)) {
+      return;
+    }
+    setState(() => selectedRange = range);
   }
 
   void _handleNextPeriod() {
-    if (!_isDisplayingLastDate) {}
+    DateTimeRange range;
+    if (_tabIndex == 0) {
+      // According to the PeriodPickerMode. 0 index refers to the "DAYS"
+      // selection, which has constant 7-day per week as range.
+      range = DateTimeUtils.shiftDaysToRange(selectedRange, DateTime.daysPerWeek);
+    } else if (_tabIndex == 1) {
+      range = DateTimeUtils.shiftDaysToRange(selectedRange, (_chartLength * DateTime.daysPerWeek));
+    } else {
+      range = DateTimeUtils.shiftMonthsToRange(selectedRange, _chartLength);
+    }
+
+    if (range.end.isAfter(lastDate)) {
+      return;
+    }
+    setState(() => selectedRange = range);
   }
 
-  Widget _buildItems(BuildContext context, int index) {
+  Widget _buildChart(
+    BuildContext context, {
+    required String title,
+    bool hasMore = false,
+    required Widget chart,
+  }) {
     final moreButton = ElevatedButton(
         onPressed: () {
           // dev. Since there is only one more button among all statistic chart.
@@ -110,7 +145,9 @@ class _StatisticPageState extends State<StatisticPage> {
 
     final periodHeader = Row(mainAxisSize: MainAxisSize.min, children: [
       GestureDetector(
-          onTap: _handlePreviousPeriod, child: SvgPicture.asset('assets/icons/chevron-left.svg', color: Style.grey1)),
+          onTap: _handlePreviousPeriod,
+          child: SvgPicture.asset('assets/icons/chevron-left.svg',
+              color: _isDisplayingFirstDate ? Style.grey3 : Style.grey1)),
       PeriodPicker(
         maxWidth: 100,
         mode: _pickerModes[_tabIndex],
@@ -129,55 +166,18 @@ class _StatisticPageState extends State<StatisticPage> {
         },
       ),
       GestureDetector(
-          onTap: _handleNextPeriod, child: SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1)),
+          onTap: _handleNextPeriod,
+          child: SvgPicture.asset('assets/icons/chevron-right.svg',
+              color: _isDisplayingLastDate ? Style.grey3 : Style.grey1)),
     ]);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Style.spacingMd),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _StatisticHeader(
-            title: _titles[index],
-            topBarRightWidget: _hasMore[index] ? moreButton : periodHeader,
-          ),
+          _StatisticHeader(title: title, topBarRightWidget: hasMore ? moreButton : periodHeader),
           const SizedBox(height: Style.spacingXl),
-          ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 186),
-              child: (!_isBarChart[index])
-                  ? LineChart(
-                      data: List.generate(_dataGroups[index].length, (i) => Point(i, _dataGroups[index][i])),
-                      color: _chartColors[index],
-                      gradientColors: [_chartColors[index].withOpacity(0.8), _chartColors[index].withOpacity(0.1)],
-
-                      /// Computes the x-indices as the selected date rang
-                      getXTitles: (value) {
-                        if (value == value.roundToDouble()) {
-                          final date = selectedRange.start.add(Duration(days: value.toInt()));
-                          return DateFormat.Md().format(date);
-                        }
-                        return "";
-                      },
-
-                      getYTitles: (value) {
-                        if (value == value.roundToDouble()) {
-                          return "${value.toInt()}%";
-                        }
-                        return "";
-                      },
-                    )
-                  : BarChart(
-                      data: _dataGroups[index],
-                      gradientColors: [_chartColors[index], Theme.of(context).colorScheme.tertiary],
-
-                      /// Computes the x-indices as the selected date rang
-                      getXTitles: (value) {
-                        if (value == value.roundToDouble()) {
-                          final date = selectedRange.start.add(Duration(days: value.toInt()));
-                          return DateFormat.Md().format(date);
-                        }
-                        return "";
-                      },
-                    )),
+          chart,
         ],
       ),
     );
@@ -185,30 +185,100 @@ class _StatisticPageState extends State<StatisticPage> {
 
   @override
   Widget build(BuildContext context) {
+    List<double> meanDurations = [];
+    DateTime start = DateUtils.dateOnly(selectedRange.start);
+    final DateTime end = DateUtils.dateOnly(selectedRange.end);
+    int interval;
+    if (_tabIndex == 0) {
+      //  interval as single day
+      interval = 1;
+    } else if (_tabIndex == 1) {
+      //  interval as single week
+      interval = DateTime.daysPerWeek;
+    } else {
+      interval = DateUtils.getDaysInMonth(start.year, start.month);
+    }
+    while (!start.isAfter(end)) {
+      // update interval if [_tabIndex] == 2
+      if (_tabIndex == 2) interval = DateUtils.getDaysInMonth(start.year, start.month);
+      final DateTime next = start.add(Duration(days: interval));
+      final Iterable<SleepRecord> sleepRecords =
+          ref.watch(rangeSleepRecordsProvider(DateTimeRange(start: start, end: next)));
+      final double meanDuration = (sleepRecords.fold(0.0, (previousValue, record) {
+            final wakeUpAt = record.wakeUpAt;
+            return previousValue + (wakeUpAt == null ? 0 : wakeUpAt.difference(record.start).inMinutes);
+          })) /
+          interval;
+      meanDurations.add(meanDuration);
+      start = next;
+    }
+
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    List<Widget> charts = [
+      // _buildChart(context, title: 'Sleep Health',hasMore: true, chart: LineChart(data: data),)
+      _buildChart(context,
+          title: 'Sleep Duration',
+          chart: BarChart(
+            data: meanDurations,
+            gradientColors: [colorScheme.primary, colorScheme.tertiary],
+            getYTitles: (value) {
+              final double hour = value / 60;
+              if (hour == hour.roundToDouble()) {
+                return hour.toInt().toString();
+              } else {
+                return hour.toStringAsFixed(1);
+              }
+            },
+            getXTitles: (value) {
+              // if is integrate
+              if (value == value.roundToDouble()) {
+                final start = selectedRange.start;
+                final int index = value.round();
+                int interval;
+                DateFormat format;
+                if (_tabIndex == 0) {
+                  interval = 1;
+                  format = DateFormat.Md();
+                } else if (_tabIndex == 1) {
+                  interval = DateTime.daysPerWeek;
+                  format = DateFormat.Md();
+                } else {
+                  interval = DateUtils.getDaysInMonth(start.year, start.month);
+                  format = DateFormat.MMM();
+                }
+                final dayToAdd = index * interval;
+                final date = DateUtils.addDaysToDate(start, dayToAdd);
+                return format.format(date);
+              }
+              return "";
+            },
+          ))
+    ];
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(_appBarHeight),
-        child: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: Theme.of(context).colorScheme.background.withOpacity(0.75),
-          elevation: 0,
-          flexibleSpace: Padding(
-              padding: const EdgeInsets.all(Style.spacingMd),
-              child: SleepPeriodTabBar(
-                labels: _tabs,
-                initialIndex: _tabIndex,
-                onChanged: _handleTabChanged,
-              )),
+        extendBodyBehindAppBar: true,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(_appBarHeight),
+          child: AppBar(
+            automaticallyImplyLeading: false,
+            backgroundColor: Theme.of(context).colorScheme.background.withOpacity(0.75),
+            elevation: 0,
+            flexibleSpace: Padding(
+                padding: const EdgeInsets.all(Style.spacingMd),
+                child: SleepPeriodTabBar(
+                  labels: _tabs,
+                  initialIndex: _tabIndex,
+                  onChanged: _handleTabChanged,
+                )),
+          ),
         ),
-      ),
-      body: ListView.separated(
-        physics: const BouncingScrollPhysics(),
-        itemBuilder: _buildItems,
-        separatorBuilder: (_, __) => const SizedBox(height: Style.spacingXxl),
-        itemCount: _titles.length,
-      ),
-    );
+        body: ListView(
+          physics: const BouncingScrollPhysics(),
+          children: charts
+              .mapIndexed((index, child) =>
+                  <Widget>[child, if (index != charts.length - 1) const SizedBox(height: Style.spacingXxl)])
+              .expand((child) => child)
+              .toList(),
+        ));
   }
 }
 

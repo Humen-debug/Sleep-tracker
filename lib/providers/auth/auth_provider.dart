@@ -98,7 +98,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
             sleepIndex = math.exp(-1 / timeConst) * sleepIndex + k * meanMagnitudeWithinSecond;
             record = record.copyWith(events: [...record.events, SleepEvent(intensity: sleepIndex, time: now)]);
             state = state.copyWith(sleepRecords: [record, ...state.sleepRecords.sublist(1)]);
-            AppLogger.I.i('Update sleep event ($now):$meanMagnitudeWithinSecond, sleepIndex: $sleepIndex');
           }
           first = next;
           count = 0;

@@ -5,7 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
-import 'package:sleep_tracker/components/line_chart.dart';
+import 'package:sleep_tracker/components/charts/line_chart.dart';
 import 'package:sleep_tracker/components/period_picker/period_picker.dart';
 import 'package:sleep_tracker/components/range_indicator.dart';
 import 'package:sleep_tracker/components/sleep_period_tab_bar.dart';

@@ -10,7 +10,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:sleep_tracker/components/dash_line.dart';
-import 'package:sleep_tracker/components/line_chart.dart';
+import 'package:sleep_tracker/components/charts/line_chart.dart';
 import 'package:sleep_tracker/components/moods/daily_mood.dart';
 import 'package:sleep_tracker/components/moods/mood_picker.dart';
 import 'package:sleep_tracker/components/moods/utils.dart';
@@ -20,6 +20,7 @@ import 'package:sleep_tracker/logger/logger.dart';
 import 'package:sleep_tracker/models/sleep_record.dart';
 import 'package:sleep_tracker/models/user.dart';
 import 'package:sleep_tracker/providers/auth_provider.dart';
+import 'package:sleep_tracker/providers/sleep_records_provider.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/date_time.dart';
 import 'package:sleep_tracker/utils/string.dart';
@@ -488,13 +489,7 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
   /// Returns the sleepRecords by given dayIndex.
   Iterable<SleepRecord> getDayRecords(int dayIndex) {
     final date = DateUtils.addDaysToDate(_firstDate, dayIndex);
-    return ref
-        .watch(authStateProvider)
-        .sleepRecords
-        .skipWhile((record) => !DateUtils.isSameDay(record.start, date))
-        .takeWhile((record) => DateUtils.isSameDay(record.start, date))
-        .toList()
-        .reversed;
+    return ref.watch(daySleepRecordsProvider(date));
   }
 
   Widget _buildWeekdayButton(int index) {

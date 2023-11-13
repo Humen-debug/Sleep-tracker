@@ -101,4 +101,20 @@ abstract final class DateTimeUtils {
   static bool isAtSameMomentAs(DateTime? dateA, DateTime? dateB) {
     return dateA?.hour == dateB?.hour && dateA?.minute == dateB?.minute && dateA?.second == dateB?.second;
   }
+
+  /// Returns a [DateTimeRange] with shifted number of [days] and time is set to
+  /// midnight.
+  static DateTimeRange shiftDaysToRange(DateTimeRange range, int days) {
+    final start = DateUtils.addDaysToDate(range.start, days);
+    final end = DateUtils.addDaysToDate(range.end, days);
+    return DateTimeRange(start: start, end: end);
+  }
+
+  /// Returns a [DateTimeRange] with shifted number of [months] and time is set to
+  /// midnight.
+  static DateTimeRange shiftMonthsToRange(DateTimeRange range, int months) {
+    final start = DateUtils.addMonthsToMonthDate(range.start, months);
+    final end = DateUtils.addMonthsToMonthDate(range.end, months);
+    return DateTimeRange(start: start, end: end);
+  }
 }
