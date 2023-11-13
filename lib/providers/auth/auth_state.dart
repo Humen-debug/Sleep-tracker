@@ -57,7 +57,7 @@ class AuthState with _$AuthState implements PersistentState<AuthState> {
           } else if (avg == null && value != null) {
             return value;
           } else {
-            return (avg! + (value ?? 0)) / count;
+            return (avg! * (count - 1) + (value ?? 0)) / count;
           }
         });
       } else {
