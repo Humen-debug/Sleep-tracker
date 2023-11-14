@@ -2,24 +2,28 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sleep_tracker/providers/sleep_records_provider.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
 @RoutePage()
-class SettingsPage extends StatefulWidget {
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsPageState extends ConsumerState<SettingsPage> {
   // dev
   bool silenceAsSystem = true;
   bool alarmOn = true;
   bool snoozeOn = true;
   String? _version;
+
+  String _sleepRecordText = '';
 
   @override
   void initState() {
@@ -176,6 +180,32 @@ class _SettingsPageState extends State<SettingsPage> {
               leading: SvgPicture.asset('assets/icons/logout.svg', color: Theme.of(context).primaryColor),
               trailing: SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1, width: 24, height: 24),
             ),
+            const SizedBox(height: Style.spacingXxl),
+            ListTile(
+              onTap: () {
+                if (_sleepRecordText.isNotEmpty) {
+                  setState(() {
+                    _sleepRecordText = '';
+                  });
+                } else {
+                  final records = ref.read(daySleepRecordsProvider(DateTime.now()));
+                  for (final record in records) {
+                    _sleepRecordText += '${record.start} -- ${record.wakeUpAt ?? record.end}';
+                    for (final event in record.events) {
+                      setState(() {
+                        _sleepRecordText += '${event.time} -- ${event.intensity}\n';
+                      });
+                    }
+                    setState(() {
+                      _sleepRecordText += '\n';
+                    });
+                  }
+                }
+              },
+              title: const Text('DEV: View Sleep Records'),
+              trailing: SvgPicture.asset('assets/icons/chevron-right.svg', color: Style.grey1, width: 24, height: 24),
+            ),
+            if (_sleepRecordText.isNotEmpty) Text(_sleepRecordText),
             const SizedBox(height: kBottomNavigationBarHeight),
           ],
         ),

@@ -53,6 +53,7 @@ dependencies:
   flutter_native_splash: ^2.3.5
   uuid: ^3.0.7
   logger: ^2.0.2+1
+  background_fetch: ^1.2.1
 
 dev_dependencies:
   flutter_test:
