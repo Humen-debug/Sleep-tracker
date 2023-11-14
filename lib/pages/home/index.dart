@@ -539,7 +539,7 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
     const Duration interval = Duration(minutes: 30);
     final DateTime? end = sleepEvents.lastOrNull?.time;
     final List<Point<DateTime, double>> sleepEventType = [];
-    final List<Point<DateTime, double>> sleepEventIntensity = [];
+    // final List<Point<DateTime, double>> sleepEventIntensity = [];
 
     if (end != null) {
       /// Returns sleep events for every record. Only return event per 30 minutes so that the
@@ -551,13 +551,13 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
             .takeWhile((event) => !event.time.isAfter(start.add(interval)));
 
         double meanType = SleepType.awaken.value.toDouble();
-        double meanIntensity = sleepIndex0;
+        // double meanIntensity = sleepIndex0;
         if (events.isNotEmpty) {
           meanType = events.map((e) => e.intensity).average;
-          meanIntensity = events.map((e) => e.type.value).average;
+          // meanIntensity = events.map((e) => e.type.value).average;
         }
         sleepEventType.add(Point(start, meanType));
-        sleepEventIntensity.add(Point(start, meanIntensity));
+        // sleepEventIntensity.add(Point(start, meanIntensity));
       }
     }
 
@@ -646,11 +646,12 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
           ),
           // DEV
           Text("DEV: Sleep Intensity", style: Theme.of(context).textTheme.headlineSmall),
-          LineChart<DateTime, num>(
-            data: sleepEventIntensity,
+          LineChart<int, num>(
+            data: sleepEvents.map((e) {
+              return Point(e.time.millisecondsSinceEpoch, e.intensity);
+            }).toList(),
             getSpot: (x, y) {
-              final int min = earliest?.millisecondsSinceEpoch ?? 0;
-              return Point((x.millisecondsSinceEpoch - min).toDouble(), y.toDouble());
+              return Point(x, y);
             },
             gradientColors: [
               Theme.of(context).primaryColor.withOpacity(0.8),
@@ -662,12 +663,15 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
             getXTitles: (value) {
               // value here is the difference of millisecondSinceEpoch between earliest and data.
               // Restore and return the millisecondSinceEpoch of data.
-              final int milliSecond = value.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
-              return DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
+
+              return DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(value.toInt()));
             },
             minY: 0,
             baseLineY: 1,
             chartHeight: 203,
+            minX: earliest?.millisecondsSinceEpoch.toDouble(),
+            maxX: end?.millisecondsSinceEpoch.toDouble(),
+            // intervalX: interval.inMilliseconds.toDouble(),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(Style.spacingMd, Style.spacingXs, Style.spacingMd, Style.spacingMd),

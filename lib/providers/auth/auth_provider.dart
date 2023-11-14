@@ -77,7 +77,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     DateTime first = DateTime.now().copyWith(millisecond: 0, microsecond: 0);
     double meanMagnitudeWithinSecond = 0.0;
     int count = 0;
-    double sleepIndex = sleepIndex0;
+    double sleepIndex = state.sleepStatus == SleepStatus.sleeping
+        ? state.sleepRecords.first.events.lastOrNull?.intensity ?? sleepIndex0
+        : sleepIndex0;
     const int timeConst = 18 * 60 + 30;
     const double k = 0.19;
     // const double filterBase = 0.02;
@@ -93,11 +95,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
           meanMagnitudeWithinSecond = (meanMagnitudeWithinSecond * (count - 1) + magnitude) / count;
         } else {
           // Store sleep event logs
-          if (state.sleepRecords.firstOrNull != null) {
+          if (state.sleepStatus == SleepStatus.sleeping) {
             SleepRecord record = state.sleepRecords.first;
             sleepIndex = math.exp(-1 / timeConst) * sleepIndex + k * meanMagnitudeWithinSecond;
             record = record.copyWith(events: [...record.events, SleepEvent(intensity: sleepIndex, time: now)]);
             state = state.copyWith(sleepRecords: [record, ...state.sleepRecords.sublist(1)]);
+            AppLogger.I.i('Update sleep event ($now)| sleep intensity: $sleepIndex');
           }
           first = next;
           count = 0;
@@ -114,7 +117,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
       switch (state.sleepStatus) {
         case SleepStatus.sleeping:
           if (_accelerometerSubscription!.isPaused) {
-            // reset
             sleepIndex = sleepIndex0;
             count = 0;
             first = DateTime.now().copyWith(millisecond: 0, microsecond: 0);

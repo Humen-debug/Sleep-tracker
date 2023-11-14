@@ -49,6 +49,23 @@ class BarChart extends StatelessWidget {
       constraints: BoxConstraints(maxHeight: chartHeight),
       child: LayoutBuilder(builder: (context, constraints) {
         return fl.BarChart(fl.BarChartData(
+            barTouchData: fl.BarTouchData(
+                enabled: true,
+                touchTooltipData: fl.BarTouchTooltipData(
+                  tooltipBgColor: Theme.of(context).colorScheme.background,
+                  tooltipBorder:
+                      BorderSide(color: gradientColors.firstOrNull ?? Theme.of(context).primaryColor, width: 2),
+                  fitInsideHorizontally: true,
+                  tooltipMargin: Style.spacingSm,
+                  getTooltipItem: (fl.BarChartGroupData group, int groupIndex, fl.BarChartRodData rod, int rodIndex) {
+                    final x = getXTitles?.call(groupIndex.toDouble()) ?? groupIndex.toString();
+                    final y = (getYTitles?.call(rod.toY) ?? rod.toY).toString();
+                    return fl.BarTooltipItem(
+                      '$x, $y',
+                      Theme.of(context).textTheme.bodySmall!.copyWith(color: rod.color, fontWeight: FontWeight.bold),
+                    );
+                  },
+                )),
             gridData: fl.FlGridData(
               show: true,
               drawVerticalLine: false,

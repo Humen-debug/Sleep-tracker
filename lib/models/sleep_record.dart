@@ -70,7 +70,7 @@ class SleepEvent with _$SleepEvent {
 
   /// 9: None(Awaken), 1: Lowest(Deep sleep) and 3: Highest(Sleep)
   /// Currently threshold to determine the sleep stage is 1.
-  SleepType get type => intensity >= math.exp(1)
+  SleepType get type => intensity >= sleepIndex0
       ? SleepType.awaken
       : intensity > 1
           ? SleepType.sleep
@@ -92,4 +92,4 @@ extension SleepTypeExtension on SleepType {
   }
 }
 
-const sleepIndex0 = math.e;
+const double sleepIndex0 = math.e;
