@@ -1,18 +1,19 @@
 import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart' as fl;
 import 'package:flutter/material.dart';
+import 'package:sleep_tracker/utils/style.dart';
 
 const double _lineChartHeight = 186.0;
 
 /// [LineChart] draws a line chart using provided [data].
 /// Currently it only draw one group of data.
-class LineChart<T extends Object?, K extends num> extends StatelessWidget {
+class LineChart<T extends Object?, K extends num?> extends StatelessWidget {
   /// [data] contains the y-axis data for [LineChart] to render.
   /// the [length] of [data] determines the x-axis for [LineChart].
-  const LineChart({
-    Key? key,
+  LineChart({
+    super.key,
     required this.data,
-    this.gradientColors = const [],
+    List<Color>? gradientColors,
     this.color,
     this.chartHeight = _lineChartHeight,
     this.getXTitles,
@@ -26,7 +27,9 @@ class LineChart<T extends Object?, K extends num> extends StatelessWidget {
     this.minY,
     this.maxY,
     this.baseLineY,
-  }) : super(key: key);
+    this.intervalX,
+  }) : gradientColors =
+            gradientColors ?? (color != null ? <Color>[color.withOpacity(0.8), color.withOpacity(0.1)] : []);
 
   final List<Point<T, K>> data;
 
@@ -50,7 +53,7 @@ class LineChart<T extends Object?, K extends num> extends StatelessWidget {
   /// corresponding spot.
   ///
   /// In default, getSpot = fl.FlSpot(index, value)
-  final Point<double, double> Function(T x, K y)? getSpot;
+  final Point<num, num?> Function(T x, K y)? getSpot;
 
   /// True if show dots on the line/curve.
   final bool showDots;
@@ -63,6 +66,7 @@ class LineChart<T extends Object?, K extends num> extends StatelessWidget {
   final double? minY;
   final double? maxY;
   final double? baseLineY;
+  final double? intervalX;
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +80,32 @@ class LineChart<T extends Object?, K extends num> extends StatelessWidget {
           maxX: maxX,
           baselineX: baselineX,
           baselineY: baseLineY,
+          lineTouchData: fl.LineTouchData(
+              enabled: true,
+              touchTooltipData: fl.LineTouchTooltipData(
+                tooltipBgColor: Theme.of(context).colorScheme.background,
+                tooltipBorder: BorderSide(color: color ?? Theme.of(context).primaryColor, width: 2),
+                showOnTopOfTheChartBoxArea: false,
+                fitInsideHorizontally: true,
+                tooltipMargin: Style.spacingSm,
+                getTooltipItems: (touchedSpots) {
+                  return touchedSpots.map(
+                    (fl.LineBarSpot touchedSpot) {
+                      final index = touchedSpot.x;
+                      final value = touchedSpot.y;
+                      final x = getXTitles?.call(index) ?? index.toString();
+                      final y = getYTitles?.call(value) ?? value.toString();
+                      return fl.LineTooltipItem(
+                        '$x${x.isNotEmpty ? ',' : ''} $y',
+                        Theme.of(context)
+                            .textTheme
+                            .bodySmall!
+                            .copyWith(color: touchedSpot.bar.color, fontWeight: FontWeight.bold),
+                      );
+                    },
+                  ).toList();
+                },
+              )),
           gridData: fl.FlGridData(
             show: true,
             drawVerticalLine: true,
@@ -86,7 +116,12 @@ class LineChart<T extends Object?, K extends num> extends StatelessWidget {
             bottomTitles: fl.AxisTitles(
               sideTitles: fl.SideTitles(
                 showTitles: true,
-                getTitlesWidget: (value, meta) => Text(getXTitles != null ? getXTitles!(value) : value.toString()),
+                getTitlesWidget: (value, meta) => Text(
+                  getXTitles != null ? getXTitles!(value) : value.toString(),
+                  maxLines: 2,
+                  overflow: TextOverflow.visible,
+                ),
+                interval: intervalX,
               ),
             ),
             leftTitles: fl.AxisTitles(
@@ -106,10 +141,10 @@ class LineChart<T extends Object?, K extends num> extends StatelessWidget {
           lineBarsData: <fl.LineChartBarData>[
             fl.LineChartBarData(
               spots: data.mapIndexed((index, d) {
-                Point<double, double>? pair = getSpot?.call(d.x, d.y);
-                final double x = pair?.x ?? index.toDouble();
-                final double y = pair?.y ?? d.y.toDouble();
-                return fl.FlSpot(x, y);
+                Point<num, num?>? pair = getSpot?.call(d.x, d.y);
+                final double x = (pair?.x ?? index).toDouble();
+                final double? y = (pair?.y ?? d.y)?.toDouble();
+                return y == null ? fl.FlSpot.nullSpot : fl.FlSpot(x, y);
               }).toList(),
               dotData: fl.FlDotData(show: showDots),
               isCurved: true,
@@ -132,8 +167,11 @@ class LineChart<T extends Object?, K extends num> extends StatelessWidget {
   }
 }
 
-class Point<T extends Object?, K extends num> {
+class Point<T extends Object?, K extends num?> {
   const Point(this.x, this.y);
-  final K y;
   final T x;
+  final K y;
+
+  @override
+  String toString() => 'Point(x: $x, y: $y)';
 }

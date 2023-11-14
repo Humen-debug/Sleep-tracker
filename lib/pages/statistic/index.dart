@@ -7,10 +7,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:sleep_tracker/components/charts/bar_chart.dart';
+import 'package:sleep_tracker/components/charts/line_chart.dart';
 // import 'package:sleep_tracker/components/charts/line_chart.dart';
 import 'package:sleep_tracker/components/period_pickers.dart';
 import 'package:sleep_tracker/components/sleep_period_tab_bar.dart';
 import 'package:sleep_tracker/models/sleep_record.dart';
+import 'package:sleep_tracker/providers/auth/auth_provider.dart';
 import 'package:sleep_tracker/providers/sleep_records_provider.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/date_time.dart';
@@ -52,6 +54,8 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
 
   /// Initially, set Friday of this week as the last date.
   late final DateTime lastDate;
+
+  /// Initially set half year before the earliest sleepRecord.
   late final DateTime firstDate;
 
   bool get _isDisplayingFirstDate => !selectedRange.start.isAfter(firstDate);
@@ -64,7 +68,9 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
   void initState() {
     super.initState();
     final DateTime now = DateTime.now();
-    firstDate = DateUtils.dateOnly(now.subtract(const Duration(days: 365)).copyWith(day: 1));
+    final DateTime first = ref.read(authStateProvider).sleepRecords.lastOrNull?.start ?? now;
+    firstDate =
+        DateUtils.addMonthsToMonthDate(DateUtils.dateOnly(DateTimeUtils.mostRecentWeekday(first, 0)), -_chartLength);
     lastDate = DateUtils.dateOnly(DateTimeUtils.mostNearestWeekday(now, 6));
   }
 
@@ -84,7 +90,7 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
     });
   }
 
-  /// Shift [selectedRange] to previous intervals based on [_tabIndex]
+  /// Shifts [selectedRange] to previous intervals based on [_tabIndex]
   void _handlePreviousPeriod() {
     DateTimeRange range;
     if (_tabIndex == 0) {
@@ -92,6 +98,8 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
       // selection, which has constant 7-day per week as range.
       range = DateTimeUtils.shiftDaysToRange(selectedRange, -DateTime.daysPerWeek);
     } else if (_tabIndex == 1) {
+      // According to the PeriodPickerMode. 1 index refers to the "WEEKS"
+      // selection, which has constant (_chartLength * 7-day per week) as range.
       range = DateTimeUtils.shiftDaysToRange(selectedRange, -(_chartLength * DateTime.daysPerWeek));
     } else {
       range = DateTimeUtils.shiftMonthsToRange(selectedRange, -_chartLength);
@@ -103,11 +111,10 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
     setState(() => selectedRange = range);
   }
 
+  /// Shifts [selectedRange] to next intervals based on [_tabIndex]
   void _handleNextPeriod() {
     DateTimeRange range;
     if (_tabIndex == 0) {
-      // According to the PeriodPickerMode. 0 index refers to the "DAYS"
-      // selection, which has constant 7-day per week as range.
       range = DateTimeUtils.shiftDaysToRange(selectedRange, DateTime.daysPerWeek);
     } else if (_tabIndex == 1) {
       range = DateTimeUtils.shiftDaysToRange(selectedRange, (_chartLength * DateTime.daysPerWeek));
@@ -185,7 +192,11 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
 
   @override
   Widget build(BuildContext context) {
-    List<double> meanDurations = [];
+    List<double> meanSleepDurations = [];
+    // Stores sleep start time in minutes (since 00:00) per interval.
+    List<Point<DateTime, int?>> wentToSleepAt = [];
+    // Store average mood per interval.
+    List<Point<DateTime, double?>> meanMoods = [];
     DateTime start = DateUtils.dateOnly(selectedRange.start);
     final DateTime end = DateUtils.dateOnly(selectedRange.end);
     int interval;
@@ -201,25 +212,88 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
     while (!start.isAfter(end)) {
       // update interval if [_tabIndex] == 2
       if (_tabIndex == 2) interval = DateUtils.getDaysInMonth(start.year, start.month);
-      final DateTime next = start.add(Duration(days: interval));
+      final DateTime next = DateUtils.addDaysToDate(start, interval);
       final Iterable<SleepRecord> sleepRecords =
           ref.watch(rangeSleepRecordsProvider(DateTimeRange(start: start, end: next)));
+
       final double meanDuration = (sleepRecords.fold(0.0, (previousValue, record) {
             final wakeUpAt = record.wakeUpAt;
             return previousValue + (wakeUpAt == null ? 0 : wakeUpAt.difference(record.start).inMinutes);
           })) /
           interval;
-      meanDurations.add(meanDuration);
+      meanSleepDurations.add(meanDuration);
+
+      double? meanMood;
+      int count = 0;
+      for (final record in sleepRecords) {
+        final double? mood = record.sleepQuality;
+        meanMood ??= mood;
+        if (mood != null) count++;
+        if (meanMood != null && mood != null) {
+          meanMood = (meanMood * (count - 1) + mood) / count;
+        }
+      }
+
+      meanMoods.add(Point(start, meanMood));
+
+      final Iterable<Point<DateTime, int?>> wentToSleep = sleepRecords.map((record) {
+        return Point(record.start, record.start.hour * 60 + record.start.minute);
+      });
+
+      wentToSleepAt.addAll(wentToSleep.isEmpty ? [Point(start, null)] : wentToSleep);
       start = next;
     }
 
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    String getBarDateTitles(double value) {
+      // if is integrate
+      if (value == value.roundToDouble()) {
+        final start = selectedRange.start;
+        final int index = value.round();
+        int interval;
+        DateFormat format;
+        if (_tabIndex == 0) {
+          interval = 1;
+          format = DateFormat.Md();
+        } else if (_tabIndex == 1) {
+          interval = DateTime.daysPerWeek;
+          format = DateFormat.Md();
+        } else {
+          interval = DateUtils.getDaysInMonth(start.year, start.month);
+          format = DateFormat.MMM();
+        }
+        final dayToAdd = index * interval;
+        final date = DateUtils.addDaysToDate(start, dayToAdd);
+        return format.format(date);
+      }
+      return "";
+    }
+
+    String getLineDateTitles(double value) {
+      // value is in milliSecondsSinceEpoch.
+      if (value == value.roundToDouble()) {
+        DateFormat format;
+
+        if (_tabIndex == 0) {
+          format = DateFormat.Md();
+        } else if (_tabIndex == 1) {
+          format = DateFormat.Md();
+        } else {
+          format = DateFormat.MMM();
+        }
+
+        return format.format(DateTime.fromMillisecondsSinceEpoch(value.toInt()));
+      }
+      return '';
+    }
+
     List<Widget> charts = [
       // _buildChart(context, title: 'Sleep Health',hasMore: true, chart: LineChart(data: data),)
       _buildChart(context,
           title: 'Sleep Duration',
           chart: BarChart(
-            data: meanDurations,
+            data: meanSleepDurations,
             gradientColors: [colorScheme.primary, colorScheme.tertiary],
             getYTitles: (value) {
               final double hour = value / 60;
@@ -229,29 +303,49 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
                 return hour.toStringAsFixed(1);
               }
             },
-            getXTitles: (value) {
-              // if is integrate
-              if (value == value.roundToDouble()) {
-                final start = selectedRange.start;
-                final int index = value.round();
-                int interval;
-                DateFormat format;
-                if (_tabIndex == 0) {
-                  interval = 1;
-                  format = DateFormat.Md();
-                } else if (_tabIndex == 1) {
-                  interval = DateTime.daysPerWeek;
-                  format = DateFormat.Md();
-                } else {
-                  interval = DateUtils.getDaysInMonth(start.year, start.month);
-                  format = DateFormat.MMM();
-                }
-                final dayToAdd = index * interval;
-                final date = DateUtils.addDaysToDate(start, dayToAdd);
-                return format.format(date);
-              }
-              return "";
+            getXTitles: getBarDateTitles,
+          )),
+
+      _buildChart(context,
+          title: 'Went To Sleep',
+          chart: LineChart<DateTime, int?>(
+            data: wentToSleepAt,
+            getSpot: (x, y) {
+              // compute dx as index in unit [day]
+              final dx = x.millisecondsSinceEpoch;
+              return Point(dx, y);
             },
+            getYTitles: (value) {
+              final hour = ((value / 60).floor()).toString().padLeft(2, '0');
+              final minute = value.remainder(60).round().toString().padLeft(2, '0');
+              return "$hour:$minute";
+            },
+            getXTitles: getLineDateTitles,
+            color: Style.highlightPurple,
+            showDots: true,
+            minX: selectedRange.start.millisecondsSinceEpoch.toDouble(),
+            maxX: selectedRange.end.millisecondsSinceEpoch.toDouble(),
+            maxY: 24 * 60 - 1,
+            intervalX: interval * (24.0 * 3600 * 1000),
+          )),
+      _buildChart(context,
+          title: 'Sleep Quality',
+          chart: LineChart(
+            data: meanMoods,
+            getSpot: (x, y) {
+              // compute dx as index in unit [day]
+              final dx = x.millisecondsSinceEpoch;
+              return Point(dx, y);
+            },
+            getYTitles: (value) => "${(value * 100).round()}%",
+            getXTitles: getLineDateTitles,
+            color: Style.successColor,
+            showDots: true,
+            minX: selectedRange.start.millisecondsSinceEpoch.toDouble(),
+            maxX: selectedRange.end.millisecondsSinceEpoch.toDouble(),
+            minY: 0,
+            maxY: 1,
+            intervalX: interval * (24.0 * 3600 * 1000),
           ))
     ];
     return Scaffold(

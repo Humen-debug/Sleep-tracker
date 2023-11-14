@@ -36,6 +36,9 @@ class AuthState with _$AuthState implements PersistentState<AuthState> {
     return SleepStatus.awaken;
   }
 
+  /// Returns all the daily average mood per month.
+  ///
+  /// Every elements in list has [daysInMonth] average moods.
   List<List<double?>> get monthlyMoods {
     if (sleepRecords.isEmpty) return [];
 
