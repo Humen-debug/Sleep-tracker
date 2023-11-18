@@ -8,6 +8,7 @@ import 'package:sleep_tracker/models/sleep_record.dart';
 import 'package:sleep_tracker/models/user.dart';
 import 'package:sleep_tracker/providers/auth_provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:sleep_tracker/providers/background/background_provider.dart';
 import 'package:uuid/uuid.dart';
 
 Stream<DateTime> getPeriodicStream([Duration interval = const Duration(seconds: 1)]) async* {
@@ -52,6 +53,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> init() async {
     await restoreFromStorage();
+    if (await restoreFromBackground()) {
+      await state.localSave();
+    }
     if (state.token.isNotEmpty && await syncEverything()) {
       await state.localSave();
     }
@@ -64,6 +68,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _secondSubscription?.cancel();
     _accelerometerSubscription?.cancel();
     super.dispose();
+  }
+
+  Future<bool> restoreFromBackground() async {
+    try {
+      final background = await ref.read(backgroundProvider).fromStorage();
+      AppLogger.I.i('Background stores: $background');
+
+      return true;
+    } catch (e, s) {
+      AppLogger.I.e('Error restoring BackgroundState from SecureStorage', error: e, stackTrace: s);
+      return false;
+    }
   }
 
   /// Set up a stream listener to the user's accelerometer event.
@@ -100,7 +116,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
             sleepIndex = math.exp(-1 / timeConst) * sleepIndex + k * meanMagnitudeWithinSecond;
             record = record.copyWith(events: [...record.events, SleepEvent(intensity: sleepIndex, time: now)]);
             state = state.copyWith(sleepRecords: [record, ...state.sleepRecords.sublist(1)]);
-            AppLogger.I.i('Update sleep event ($now)| sleep intensity: $sleepIndex');
+            // AppLogger.I.i('Update sleep event ($now)| sleep intensity: $sleepIndex');
           }
           first = next;
           count = 0;

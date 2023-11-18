@@ -539,7 +539,6 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
     const Duration interval = Duration(minutes: 30);
     final DateTime? end = sleepEvents.lastOrNull?.time;
     final List<Point<DateTime, double>> sleepEventType = [];
-    // final List<Point<DateTime, double>> sleepEventIntensity = [];
 
     if (end != null) {
       /// Returns sleep events for every record. Only return event per 30 minutes so that the
@@ -550,14 +549,16 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
             .skipWhile((event) => event.time.isBefore(start))
             .takeWhile((event) => !event.time.isAfter(start.add(interval)));
 
-        double meanType = SleepType.awaken.value.toDouble();
-        // double meanIntensity = sleepIndex0;
+        SleepType type =
+            getDayRecords(_dayIndex).any((element) => !element.start.isBefore(start) && !element.end.isAfter(start))
+                ? SleepType.deepSleep
+                : SleepType.awaken;
+        double meanType = type.value.toDouble();
+
         if (events.isNotEmpty) {
           meanType = events.map((e) => e.intensity).average;
-          // meanIntensity = events.map((e) => e.type.value).average;
         }
         sleepEventType.add(Point(start, meanType));
-        // sleepEventIntensity.add(Point(start, meanIntensity));
       }
     }
 
