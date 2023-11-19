@@ -4,41 +4,17 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sleep_tracker/logger/logger.dart';
 import 'package:sleep_tracker/providers/auth/auth_provider.dart';
-import 'package:sleep_tracker/providers/background/background_provider.dart';
+import 'package:sleep_tracker/utils/background/background_controller.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/theme_data.dart';
-
-/// This "Headless Task" is run when app is terminated.
-@pragma('vm:entry-point')
-void backgroundFetchHeadlessTask(HeadlessTask task) async {
-  var taskId = task.taskId;
-  var timeout = task.timeout;
-  if (timeout) {
-    AppLogger.I.i("[BackgroundFetch] Headless task timed-out: $taskId");
-    BackgroundFetch.finish(taskId);
-    return;
-  }
-
-  AppLogger.I.i("[BackgroundFetch] Headless event received: $taskId");
-
-  if (taskId == 'flutter_background_fetch') {
-    BackgroundFetch.scheduleTask(TaskConfig(
-      taskId: "com.transistorsoft.customtask",
-      delay: 5000,
-      periodic: true,
-      forceAlarmManager: false,
-      stopOnTerminate: false,
-      enableHeadless: true,
-    ));
-  }
-  BackgroundFetch.finish(taskId);
-}
 
 void main() {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   runApp(const ProviderScope(child: MyApp()));
-  BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
+
+  /// Must call [BackgroundFetch.registerHeadlessTask] in main with static/public function
+  BackgroundFetch.registerHeadlessTask(BackgroundController.backgroundFetchHeadlessTask);
 }
 
 class MyApp extends ConsumerStatefulWidget {
@@ -53,7 +29,7 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   Future<bool> _initialize(BuildContext context) async {
     try {
-      await ref.read(backgroundProvider.notifier).init();
+      await BackgroundController.init();
     } catch (e, s) {
       AppLogger.I.e('Background State init Error', error: e, stackTrace: s);
     }

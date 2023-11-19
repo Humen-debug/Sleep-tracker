@@ -8,7 +8,7 @@ import 'package:sleep_tracker/models/sleep_record.dart';
 import 'package:sleep_tracker/models/user.dart';
 import 'package:sleep_tracker/providers/auth_provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
-import 'package:sleep_tracker/providers/background/background_provider.dart';
+import 'package:sleep_tracker/utils/background/background_controller.dart';
 import 'package:uuid/uuid.dart';
 
 Stream<DateTime> getPeriodicStream([Duration interval = const Duration(seconds: 1)]) async* {
@@ -72,8 +72,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<bool> restoreFromBackground() async {
     try {
-      final background = await ref.read(backgroundProvider).fromStorage();
-      AppLogger.I.i('Background stores: $background');
+      final background = BackgroundController.state;
+
+      AppLogger.I.i(background.events.skip((background.events.length - 10).abs()).toString());
 
       return true;
     } catch (e, s) {
@@ -116,7 +117,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
             sleepIndex = math.exp(-1 / timeConst) * sleepIndex + k * meanMagnitudeWithinSecond;
             record = record.copyWith(events: [...record.events, SleepEvent(intensity: sleepIndex, time: now)]);
             state = state.copyWith(sleepRecords: [record, ...state.sleepRecords.sublist(1)]);
-            // AppLogger.I.i('Update sleep event ($now)| sleep intensity: $sleepIndex');
           }
           first = next;
           count = 0;

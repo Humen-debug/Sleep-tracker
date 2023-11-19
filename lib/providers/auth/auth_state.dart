@@ -39,8 +39,12 @@ class AuthState with _$AuthState implements PersistentState<AuthState> {
   /// Returns all the daily average mood per month.
   ///
   /// Every elements in list has [daysInMonth] average moods.
+  ///
+  /// When there is no data (new user), it will generates a list of null with length
+  /// of current daysInMonth
   List<List<double?>> get monthlyMoods {
-    if (sleepRecords.isEmpty) return [];
+    final DateTime now = DateTime.now();
+    if (sleepRecords.isEmpty) return [List.filled(DateUtils.getDaysInMonth(now.year, now.month), null)];
 
     Map<DateTime, double?> dailyAvgMood = {};
 

@@ -307,7 +307,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _TodayMoodBoard(
-                        initialValue: auth.sleepRecords.first.sleepQuality,
+                        initialValue: auth.sleepRecords.firstOrNull?.sleepQuality,
                         onChanged: _handleMoodChanged,
                       ),
                       if (child != null) child
