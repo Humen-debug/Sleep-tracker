@@ -14,10 +14,6 @@ abstract class BackgroundController {
   static const Duration epoch = Duration(seconds: 30);
   // static const String _backgroundFetchDefaultId = 'flutter_background_fetch';
 
-  /// It is already registered in XCode sign and capacity -> Background mode.
-  static const String _backgroundFetchHeadlessId = 'com.transistorsoft.customtask';
-  static const int _delayInMilliSeconds = 10000;
-
   static Future<bool> restoreFromStorage() async {
     try {
       AppLogger.I.i('Restoring BackgroundState from SecureStorage.');
@@ -62,15 +58,11 @@ abstract class BackgroundController {
     } catch (e, s) {
       AppLogger.I.e('Error configure BackgroundFetch', error: e, stackTrace: s);
     }
-    // Schedule a custom "periodic" task "com.transistorsoft.customtask" to execute _delayInMilliSecondms from now.
-    BackgroundFetch.scheduleTask(TaskConfig(
-      taskId: _backgroundFetchHeadlessId,
-      delay: _delayInMilliSeconds,
-      periodic: true,
-      forceAlarmManager: false,
-      stopOnTerminate: false,
-      enableHeadless: true,
-    ));
+  }
+
+  static Future<void> clear() async {
+    state = state.copyWith(events: {});
+    await state.localSave();
   }
 
   /// Runs when the app is running (with UI and components on screen).
@@ -83,25 +75,12 @@ abstract class BackgroundController {
 
       final double magnitude =
           math.max(math.sqrt(math.pow(event.x, 2) + math.pow(event.y, 2) + math.pow(event.z, 2)) - 1, 0.0);
-      state = state.copyWith(events: [
-        ...state.events,
-        {timestamp: magnitude}
-      ]);
+      state = state.copyWith(events: {...state.events, timestamp: magnitude});
     });
     await Future.delayed(epoch, () {
       accelerometerSubscription.cancel();
     });
     await state.localSave();
-
-    // Schedule a custom "periodic" task "com.transistorsoft.customtask" to execute _delayInMilliSeconds from now.
-    BackgroundFetch.scheduleTask(TaskConfig(
-      taskId: _backgroundFetchHeadlessId,
-      delay: _delayInMilliSeconds,
-      periodic: true,
-      forceAlarmManager: false,
-      stopOnTerminate: false,
-      enableHeadless: true,
-    ));
 
     // IMPORTANT:  You must signal completion of your fetch task or the OS can punish your app
     // for taking too long in the background.
@@ -127,32 +106,20 @@ abstract class BackgroundController {
 
     AppLogger.I.i("[BackgroundFetch] Headless event received: $taskId");
 
-    if (taskId == _backgroundFetchHeadlessId) {
-      final StreamSubscription accelerometerSubscription = userAccelerometerEvents.listen((event) async {
-        DateTime timestamp = DateTime.now();
+    final StreamSubscription accelerometerSubscription = userAccelerometerEvents.listen((event) async {
+      DateTime timestamp = DateTime.now();
 
-        final double magnitude =
-            math.max(math.sqrt(math.pow(event.x, 2) + math.pow(event.y, 2) + math.pow(event.z, 2)) - 1, 0.0);
-        state = state.copyWith(events: [
-          ...state.events,
-          {timestamp: magnitude}
-        ]);
-        await state.localSave();
-      });
+      final double magnitude =
+          math.max(math.sqrt(math.pow(event.x, 2) + math.pow(event.y, 2) + math.pow(event.z, 2)) - 1, 0.0);
+      state = state.copyWith(events: {...state.events, timestamp: magnitude});
+    });
 
-      await Future.delayed(epoch, () {
-        accelerometerSubscription.cancel();
-      });
-    }
+    await Future.delayed(epoch, () {
+      accelerometerSubscription.cancel();
+    });
+    await state.localSave();
+
     AppLogger.I.i("[BackgroundFetch] Headless event($taskId) schedules another subscription");
-    BackgroundFetch.scheduleTask(TaskConfig(
-      taskId: _backgroundFetchHeadlessId,
-      delay: 5000,
-      periodic: true,
-      forceAlarmManager: false,
-      stopOnTerminate: false,
-      enableHeadless: true,
-    ));
 
     BackgroundFetch.finish(taskId);
   }

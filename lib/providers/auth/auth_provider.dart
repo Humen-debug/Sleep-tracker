@@ -9,12 +9,20 @@ import 'package:sleep_tracker/models/user.dart';
 import 'package:sleep_tracker/providers/auth_provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:sleep_tracker/utils/background/background_controller.dart';
+import 'package:sleep_tracker/utils/background/background_state.dart';
 import 'package:uuid/uuid.dart';
 
 Stream<DateTime> getPeriodicStream([Duration interval = const Duration(seconds: 1)]) async* {
   yield* Stream.periodic(interval, (_) {
     return DateTime.now();
   }).asyncMap((event) async => event);
+}
+
+const int timeConst = 18 * 60 + 30;
+const double k = 0.19;
+
+double sleepIndexFormula(double previousSleepIndex, double mean) {
+  return math.exp(-1 / timeConst) * previousSleepIndex + k * mean;
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -53,11 +61,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> init() async {
     await restoreFromStorage();
-    if (await restoreFromBackground()) {
-      await state.localSave();
-    }
+
     if (state.token.isNotEmpty && await syncEverything()) {
       await state.localSave();
+    }
+    if (await restoreFromBackground()) {
+      await state.localSave();
+      // clear background
+      await BackgroundController.clear();
     }
 
     initSensors();
@@ -70,15 +81,55 @@ class AuthNotifier extends StateNotifier<AuthState> {
     super.dispose();
   }
 
+  /// Restores accelerometer's data collections from background.
+  ///
   Future<bool> restoreFromBackground() async {
     try {
       final background = BackgroundController.state;
 
-      AppLogger.I.i(background.events.skip((background.events.length - 10).abs()).toString());
+      // Insert in-between sleep events with background's data collections, based
+      // on the latest sleep record only.
+      SleepRecord? record = state.sleepRecords.firstOrNull;
 
+      // if there is no record, or the latest record has been already completed
+      if (record == null || (record.wakeUpAt != null && !record.wakeUpAt!.isBefore(DateTime.now()))) return true;
+
+      DateTime first = record.start;
+      double meanMagnitudeWithinSecond = 0.0;
+      int count = 0;
+      // dev
+      int total = 0;
+      final newEvents = BackgroundEvents.from(background.events)..removeWhere((key, value) => key.isBefore(first));
+      if (newEvents.isEmpty) return true;
+      DateTime next = first.add(const Duration(seconds: 1));
+      for (final entry in newEvents.entries) {
+        final DateTime timestamp = entry.key;
+        final double magnitude = entry.value as double;
+        count++;
+        total++;
+        if (!timestamp.isAfter(next)) {
+          meanMagnitudeWithinSecond = (meanMagnitudeWithinSecond * (count - 1) + magnitude) / count;
+        } else {
+          // Insert sleep event per seconds
+          final int index = record!.events.indexWhere((event) => !event.time.isBefore(timestamp));
+          if (index > 0) {
+            double sleepIndex = record.events[index].intensity;
+            sleepIndex = sleepIndexFormula(sleepIndex, meanMagnitudeWithinSecond);
+            List<SleepEvent> recordEvents = List<SleepEvent>.from(record.events);
+            recordEvents.insert(index, SleepEvent(intensity: sleepIndex, time: timestamp));
+            record = record.copyWith(events: recordEvents);
+            state = state.copyWith(sleepRecords: [record, ...state.sleepRecords.sublist(1)]);
+          }
+          next = next.add(const Duration(seconds: 1));
+          count = 0;
+          meanMagnitudeWithinSecond = magnitude;
+        }
+      }
+      AppLogger.I.i(
+          'AuthState inserted $total events from BackgroundState between ${newEvents.keys.first} and ${newEvents.keys.last}.');
       return true;
     } catch (e, s) {
-      AppLogger.I.e('Error restoring BackgroundState from SecureStorage', error: e, stackTrace: s);
+      AppLogger.I.e('Error restoring BackgroundState from BackgroundController', error: e, stackTrace: s);
       return false;
     }
   }
@@ -97,12 +148,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     double sleepIndex = state.sleepStatus == SleepStatus.sleeping
         ? state.sleepRecords.first.events.lastOrNull?.intensity ?? sleepIndex0
         : sleepIndex0;
-    const int timeConst = 18 * 60 + 30;
-    const double k = 0.19;
-    // const double filterBase = 0.02;
 
     _accelerometerSubscription ??= userAccelerometerEvents.listen(
-      (event) {
+      (event) async {
         final DateTime now = DateTime.now();
         count++;
         final double magnitude =
@@ -111,12 +159,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
         if (!now.isAfter(next)) {
           meanMagnitudeWithinSecond = (meanMagnitudeWithinSecond * (count - 1) + magnitude) / count;
         } else {
-          // Store sleep event logs
+          // Store sleep event logs per second
           if (state.sleepStatus == SleepStatus.sleeping) {
             SleepRecord record = state.sleepRecords.first;
-            sleepIndex = math.exp(-1 / timeConst) * sleepIndex + k * meanMagnitudeWithinSecond;
+            sleepIndex = sleepIndexFormula(sleepIndex, meanMagnitudeWithinSecond);
             record = record.copyWith(events: [...record.events, SleepEvent(intensity: sleepIndex, time: now)]);
             state = state.copyWith(sleepRecords: [record, ...state.sleepRecords.sublist(1)]);
+            await state.localSave();
           }
           first = next;
           count = 0;

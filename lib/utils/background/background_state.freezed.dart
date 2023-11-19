@@ -20,7 +20,7 @@ BackgroundState _$BackgroundStateFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$BackgroundState {
-  List<Map<DateTime, Object?>> get events => throw _privateConstructorUsedError;
+  Map<DateTime, Object?> get events => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -34,7 +34,7 @@ abstract class $BackgroundStateCopyWith<$Res> {
           BackgroundState value, $Res Function(BackgroundState) then) =
       _$BackgroundStateCopyWithImpl<$Res, BackgroundState>;
   @useResult
-  $Res call({List<Map<DateTime, Object?>> events});
+  $Res call({Map<DateTime, Object?> events});
 }
 
 /// @nodoc
@@ -56,7 +56,7 @@ class _$BackgroundStateCopyWithImpl<$Res, $Val extends BackgroundState>
       events: null == events
           ? _value.events
           : events // ignore: cast_nullable_to_non_nullable
-              as List<Map<DateTime, Object?>>,
+              as Map<DateTime, Object?>,
     ) as $Val);
   }
 }
@@ -69,7 +69,7 @@ abstract class _$$BackgroundStateImplCopyWith<$Res>
       __$$BackgroundStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({List<Map<DateTime, Object?>> events});
+  $Res call({Map<DateTime, Object?> events});
 }
 
 /// @nodoc
@@ -89,7 +89,7 @@ class __$$BackgroundStateImplCopyWithImpl<$Res>
       events: null == events
           ? _value._events
           : events // ignore: cast_nullable_to_non_nullable
-              as List<Map<DateTime, Object?>>,
+              as Map<DateTime, Object?>,
     ));
   }
 }
@@ -97,21 +97,20 @@ class __$$BackgroundStateImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$BackgroundStateImpl extends _BackgroundState {
-  const _$BackgroundStateImpl(
-      {final List<Map<DateTime, Object?>> events = const []})
+  const _$BackgroundStateImpl({final Map<DateTime, Object?> events = const {}})
       : _events = events,
         super._();
 
   factory _$BackgroundStateImpl.fromJson(Map<String, dynamic> json) =>
       _$$BackgroundStateImplFromJson(json);
 
-  final List<Map<DateTime, Object?>> _events;
+  final Map<DateTime, Object?> _events;
   @override
   @JsonKey()
-  List<Map<DateTime, Object?>> get events {
-    if (_events is EqualUnmodifiableListView) return _events;
+  Map<DateTime, Object?> get events {
+    if (_events is EqualUnmodifiableMapView) return _events;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_events);
+    return EqualUnmodifiableMapView(_events);
   }
 
   @override
@@ -148,7 +147,7 @@ class _$BackgroundStateImpl extends _BackgroundState {
 }
 
 abstract class _BackgroundState extends BackgroundState {
-  const factory _BackgroundState({final List<Map<DateTime, Object?>> events}) =
+  const factory _BackgroundState({final Map<DateTime, Object?> events}) =
       _$BackgroundStateImpl;
   const _BackgroundState._() : super._();
 
@@ -156,7 +155,7 @@ abstract class _BackgroundState extends BackgroundState {
       _$BackgroundStateImpl.fromJson;
 
   @override
-  List<Map<DateTime, Object?>> get events;
+  Map<DateTime, Object?> get events;
   @override
   @JsonKey(ignore: true)
   _$$BackgroundStateImplCopyWith<_$BackgroundStateImpl> get copyWith =>

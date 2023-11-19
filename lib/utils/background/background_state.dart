@@ -6,12 +6,12 @@ import 'package:sleep_tracker/utils/json_secure_sync.dart';
 part 'background_state.freezed.dart';
 part 'background_state.g.dart';
 
-typedef BackgroundEvent = Map<DateTime, Object?>;
+typedef BackgroundEvents = Map<DateTime, Object?>;
 
 @freezed
 class BackgroundState with _$BackgroundState implements PersistentState<BackgroundState> {
   const factory BackgroundState({
-    @Default([]) List<BackgroundEvent> events,
+    @Default({}) BackgroundEvents events,
   }) = _BackgroundState;
   const BackgroundState._();
 

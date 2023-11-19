@@ -165,7 +165,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                   case SleepStatus.sleeping:
                     titleText = 'Sleeping Time';
                     mainButton = ElevatedButton(onPressed: _wakeUp, child: const Text('Wake up'));
-                    secondaryButton = OutlinedButton(onPressed: _snooze, child: const Text('Snooze for 5 minutes'));
+                    if (auth.sleepRecords.firstOrNull?.end.isBefore(DateTime.now()) ?? false) {
+                      secondaryButton = OutlinedButton(onPressed: _snooze, child: const Text('Snooze for 5 minutes'));
+                    }
                     break;
                 }
                 final Color primaryColor = Theme.of(context).primaryColor;
@@ -536,21 +538,31 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
   @override
   Widget build(BuildContext context) {
     final Iterable<SleepEvent> sleepEvents = getDayRecords(_dayIndex).expand((record) => record.events);
-    const Duration interval = Duration(minutes: 30);
+
     final DateTime? end = sleepEvents.lastOrNull?.time;
     final List<Point<DateTime, double>> sleepEventType = [];
 
     if (end != null) {
+      DateTime start = sleepEvents.first.time;
+      Duration interval;
+      if (end.difference(start).inHours > 2) {
+        interval = const Duration(minutes: 30);
+      } else if (end.difference(start).inMinutes > 59) {
+        interval = const Duration(minutes: 15);
+      } else {
+        interval = const Duration(minutes: 5);
+      }
+
       /// Returns sleep events for every record. Only return event per 30 minutes so that the
       /// line chart is not packed with data.
-      for (DateTime start = sleepEvents.first.time; true; start = start.add(interval)) {
+      for (start; true; start = start.add(interval)) {
         if (start.isAfter(end)) break;
         final events = sleepEvents
             .skipWhile((event) => event.time.isBefore(start))
             .takeWhile((event) => !event.time.isAfter(start.add(interval)));
 
         SleepType type =
-            getDayRecords(_dayIndex).any((element) => !element.start.isBefore(start) && !element.end.isAfter(start))
+            getDayRecords(_dayIndex).any((element) => element.start.isBefore(start) && element.end.isAfter(start))
                 ? SleepType.deepSleep
                 : SleepType.awaken;
         double meanType = type.value.toDouble();
