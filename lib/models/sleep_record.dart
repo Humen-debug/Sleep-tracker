@@ -70,11 +70,7 @@ class SleepEvent with _$SleepEvent {
 
   /// 9: None(Awaken), 1: Lowest(Deep sleep) and 3: Highest(Sleep)
   /// Currently threshold to determine the sleep stage is 1.
-  SleepType get type => intensity >= sleepIndex0
-      ? SleepType.awaken
-      : intensity > 1
-          ? SleepType.sleep
-          : SleepType.deepSleep;
+  SleepType get type => intensity >= sleepIndex0 ? SleepType.awaken : SleepType.deepSleep;
 }
 
 enum SleepType { awaken, sleep, deepSleep }

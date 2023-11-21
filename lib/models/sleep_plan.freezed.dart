@@ -22,6 +22,7 @@ SleepPlan _$SleepPlanFromJson(Map<String, dynamic> json) {
 mixin _$SleepPlan {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
+  String get brief => throw _privateConstructorUsedError;
   String get desc => throw _privateConstructorUsedError;
 
   /// [sleepMinutes] determines the sleep intervals in minutes.
@@ -46,6 +47,7 @@ abstract class $SleepPlanCopyWith<$Res> {
   $Res call(
       {String id,
       String name,
+      String brief,
       String desc,
       List<double> sleepMinutes,
       List<String> targets});
@@ -66,6 +68,7 @@ class _$SleepPlanCopyWithImpl<$Res, $Val extends SleepPlan>
   $Res call({
     Object? id = null,
     Object? name = null,
+    Object? brief = null,
     Object? desc = null,
     Object? sleepMinutes = null,
     Object? targets = null,
@@ -78,6 +81,10 @@ class _$SleepPlanCopyWithImpl<$Res, $Val extends SleepPlan>
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      brief: null == brief
+          ? _value.brief
+          : brief // ignore: cast_nullable_to_non_nullable
               as String,
       desc: null == desc
           ? _value.desc
@@ -106,6 +113,7 @@ abstract class _$$SleepPlanImplCopyWith<$Res>
   $Res call(
       {String id,
       String name,
+      String brief,
       String desc,
       List<double> sleepMinutes,
       List<String> targets});
@@ -124,6 +132,7 @@ class __$$SleepPlanImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? name = null,
+    Object? brief = null,
     Object? desc = null,
     Object? sleepMinutes = null,
     Object? targets = null,
@@ -136,6 +145,10 @@ class __$$SleepPlanImplCopyWithImpl<$Res>
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      brief: null == brief
+          ? _value.brief
+          : brief // ignore: cast_nullable_to_non_nullable
               as String,
       desc: null == desc
           ? _value.desc
@@ -159,6 +172,7 @@ class _$SleepPlanImpl implements _SleepPlan {
   _$SleepPlanImpl(
       {required this.id,
       required this.name,
+      this.brief = '',
       this.desc = '',
       required final List<double> sleepMinutes,
       final List<String> targets = const []})
@@ -173,6 +187,9 @@ class _$SleepPlanImpl implements _SleepPlan {
   final String id;
   @override
   final String name;
+  @override
+  @JsonKey()
+  final String brief;
   @override
   @JsonKey()
   final String desc;
@@ -206,7 +223,7 @@ class _$SleepPlanImpl implements _SleepPlan {
 
   @override
   String toString() {
-    return 'SleepPlan(id: $id, name: $name, desc: $desc, sleepMinutes: $sleepMinutes, targets: $targets)';
+    return 'SleepPlan(id: $id, name: $name, brief: $brief, desc: $desc, sleepMinutes: $sleepMinutes, targets: $targets)';
   }
 
   @override
@@ -216,6 +233,7 @@ class _$SleepPlanImpl implements _SleepPlan {
             other is _$SleepPlanImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
+            (identical(other.brief, brief) || other.brief == brief) &&
             (identical(other.desc, desc) || other.desc == desc) &&
             const DeepCollectionEquality()
                 .equals(other._sleepMinutes, _sleepMinutes) &&
@@ -228,6 +246,7 @@ class _$SleepPlanImpl implements _SleepPlan {
       runtimeType,
       id,
       name,
+      brief,
       desc,
       const DeepCollectionEquality().hash(_sleepMinutes),
       const DeepCollectionEquality().hash(_targets));
@@ -250,6 +269,7 @@ abstract class _SleepPlan implements SleepPlan {
   factory _SleepPlan(
       {required final String id,
       required final String name,
+      final String brief,
       final String desc,
       required final List<double> sleepMinutes,
       final List<String> targets}) = _$SleepPlanImpl;
@@ -261,6 +281,8 @@ abstract class _SleepPlan implements SleepPlan {
   String get id;
   @override
   String get name;
+  @override
+  String get brief;
   @override
   String get desc;
   @override

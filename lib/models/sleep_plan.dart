@@ -8,6 +8,7 @@ class SleepPlan with _$SleepPlan {
   factory SleepPlan({
     required String id,
     required String name,
+    @Default('') String brief,
     @Default('') String desc,
 
     /// [sleepMinutes] determines the sleep intervals in minutes.

@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:sleep_tracker/components/moods/utils.dart';
+import 'package:sleep_tracker/utils/num.dart';
 
 import 'package:sleep_tracker/utils/style.dart';
 
@@ -56,7 +57,7 @@ class MoodPicker extends StatelessWidget {
           alignment: Alignment.center,
           child: Slider(
             value: value ?? 0,
-            label: ((value ?? 0) * 100).round().toString(),
+            label: NumFormat.toPercent(value ?? 0),
             onChangeStart: (_) => _handleOnSlide(true),
             onChanged: _handleChanged,
             onChangeEnd: (_) => _handleOnSlide(false),
