@@ -28,6 +28,7 @@ class LineChart<T extends Object?, K extends num?> extends StatelessWidget {
     this.maxY,
     this.baseLineY,
     this.intervalX,
+    this.intervalY,
   }) : gradientColors =
             gradientColors ?? (color != null ? <Color>[color.withOpacity(0.8), color.withOpacity(0.1)] : []);
 
@@ -67,6 +68,7 @@ class LineChart<T extends Object?, K extends num?> extends StatelessWidget {
   final double? maxY;
   final double? baseLineY;
   final double? intervalX;
+  final double? intervalY;
 
   @override
   Widget build(BuildContext context) {
@@ -126,14 +128,16 @@ class LineChart<T extends Object?, K extends num?> extends StatelessWidget {
             ),
             leftTitles: fl.AxisTitles(
               sideTitles: fl.SideTitles(
-                  showTitles: true,
-                  reservedSize: yTitleWidth,
-                  getTitlesWidget: (value, meta) => Text(
-                        getYTitles != null ? getYTitles!(value) : value.toString(),
-                        textAlign: TextAlign.end,
-                        maxLines: 2,
-                        overflow: TextOverflow.visible,
-                      )),
+                showTitles: true,
+                reservedSize: yTitleWidth,
+                getTitlesWidget: (value, meta) => Text(
+                  getYTitles != null ? getYTitles!(value) : value.toString(),
+                  textAlign: TextAlign.end,
+                  maxLines: 2,
+                  overflow: TextOverflow.visible,
+                ),
+                interval: intervalY,
+              ),
             ),
             topTitles: const fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: false)),
             rightTitles: const fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: false)),

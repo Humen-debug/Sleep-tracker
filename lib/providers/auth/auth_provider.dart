@@ -93,7 +93,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       SleepRecord? record = state.sleepRecords.firstOrNull;
 
       // if there is no record, or the latest record has been already completed
-      if (record == null || (record.wakeUpAt != null && !record.wakeUpAt!.isBefore(DateTime.now()))) return true;
+      if (record == null || (record.wakeUpAt != null && record.wakeUpAt!.isBefore(DateTime.now()))) return true;
 
       DateTime first = record.start;
       double meanMagnitudeWithinSecond = 0.0;

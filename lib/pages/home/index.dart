@@ -23,6 +23,7 @@ import 'package:sleep_tracker/providers/auth_provider.dart';
 import 'package:sleep_tracker/providers/sleep_records_provider.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/date_time.dart';
+import 'package:sleep_tracker/utils/num.dart';
 import 'package:sleep_tracker/utils/string.dart';
 import 'package:sleep_tracker/utils/style.dart';
 import 'package:sleep_tracker/utils/theme_data.dart';
@@ -537,7 +538,8 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
 
   @override
   Widget build(BuildContext context) {
-    final Iterable<SleepEvent> sleepEvents = getDayRecords(_dayIndex).expand((record) => record.events);
+    final Iterable<SleepRecord> records = getDayRecords(_dayIndex);
+    final Iterable<SleepEvent> sleepEvents = records.expand((record) => record.events);
 
     final DateTime? end = sleepEvents.lastOrNull?.time;
     final List<Point<DateTime, double>> sleepEventType = [];
@@ -561,11 +563,7 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
             .skipWhile((event) => event.time.isBefore(start))
             .takeWhile((event) => !event.time.isAfter(start.add(interval)));
 
-        SleepType type =
-            getDayRecords(_dayIndex).any((element) => element.start.isBefore(start) && element.end.isAfter(start))
-                ? SleepType.deepSleep
-                : SleepType.awaken;
-        double meanType = type.value.toDouble();
+        double meanType = SleepType.awaken.value.toDouble();
 
         if (events.isNotEmpty) {
           meanType = events.map((e) => e.intensity).average;
@@ -574,7 +572,37 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
       }
     }
 
-    final DateTime? earliest = getDayRecords(_dayIndex).firstOrNull?.start;
+    final DateTime? earliest = records.firstOrNull?.start;
+
+    double awakenMinutes = 0.0;
+    double deepSleepMinutes = 0.0;
+
+    for (int i = 0; i < sleepEvents.length - 1; i++) {
+      final log = sleepEvents.elementAt(i);
+      final nextLog = sleepEvents.elementAt(i + 1);
+      final time = nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
+      // According to our sleep-wake classification algorithm, type is divided into
+      // SleepType.awaken and SleepType.deepSleep;
+      if (log.type == SleepType.awaken) {
+        awakenMinutes += time;
+      } else if (log.type == SleepType.deepSleep) {
+        deepSleepMinutes += time;
+      }
+    }
+
+    if (sleepEvents.isNotEmpty && records.last.wakeUpAt != null) {
+      final last = sleepEvents.last;
+      final time = (records.last.wakeUpAt!.difference(last.time).inMilliseconds).abs() / (60 * 1000);
+      if (last.type == SleepType.deepSleep) {
+        deepSleepMinutes += time;
+      }
+    }
+    double minutesInBed = records
+        .where((record) => record.wakeUpAt != null)
+        .fold(0.0, (previousValue, record) => previousValue + record.wakeUpAt!.difference(record.start).inMinutes);
+
+    double sleepMinutes = minutesInBed - awakenMinutes - deepSleepMinutes;
+    double asleepMinutes = minutesInBed - awakenMinutes;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Style.spacingMd),
@@ -640,9 +668,9 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
 
               if (index >= 9) {
                 return 'Awake';
-              } else if (index == 4) {
+              } else if (index == 3) {
                 return 'Sleep';
-              } else if (index == 2) {
+              } else if (index == 1) {
                 return 'Deep Sleep';
               }
               return '';
@@ -656,6 +684,7 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
             minY: 0,
             maxY: 9,
             chartHeight: 203,
+            intervalY: 1.0,
           ),
           // DEV
           Text("DEV: Sleep Intensity", style: Theme.of(context).textTheme.headlineSmall),
@@ -684,56 +713,67 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
             chartHeight: 203,
             minX: earliest?.millisecondsSinceEpoch.toDouble(),
             maxX: end?.millisecondsSinceEpoch.toDouble(),
-            // intervalX: interval.inMilliseconds.toDouble(),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(Style.spacingMd, Style.spacingXs, Style.spacingMd, Style.spacingMd),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
+          if (records.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(Style.spacingMd, Style.spacingXs, Style.spacingMd, Style.spacingMd),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${DateFormat.jm().format(records.first.start)} - ${DateFormat.jm().format(records.last.wakeUpAt ?? records.last.end)}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Style.grey3),
+                        ),
+                        Text('${asleepMinutes ~/ 60}hr ${asleepMinutes.remainder(60).toInt()}min asleep',
+                            style: dataTextTheme.bodyMedium)
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                      child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '1:24 AM - 9:04 AM',
+                        'Sleep Efficiency',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Style.grey3),
+                        textAlign: TextAlign.end,
                       ),
-                      Text('7hr 23min asleep', style: dataTextTheme.bodyMedium)
+                      Text(
+                        NumFormat.toPercentWithTotal(asleepMinutes, minutesInBed),
+                        style: dataTextTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                        textAlign: TextAlign.end,
+                      )
                     ],
-                  ),
-                ),
-                Expanded(
-                    child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Sleep Efficiency',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Style.grey3),
-                      textAlign: TextAlign.end,
-                    ),
-                    Text(
-                      '97%',
-                      style: dataTextTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      textAlign: TextAlign.end,
-                    )
-                  ],
-                )),
-              ],
+                  )),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Style.spacingXs),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                const SleepPhaseBlock(color: Style.highlightGold, title: 'Awake', desc: '3%'),
-                SleepPhaseBlock(color: Theme.of(context).primaryColor, title: 'Sleep', desc: '74%'),
-                const SleepPhaseBlock(color: Style.highlightPurple, title: 'Deep Sleep', desc: '23%'),
-              ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Style.spacingXs),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  SleepPhaseBlock(
+                      color: Style.highlightGold,
+                      title: 'Awake',
+                      desc: NumFormat.toPercentWithTotal(awakenMinutes, minutesInBed)),
+                  SleepPhaseBlock(
+                      color: Theme.of(context).primaryColor,
+                      title: 'Sleep',
+                      desc: NumFormat.toPercentWithTotal(sleepMinutes, minutesInBed)),
+                  SleepPhaseBlock(
+                      color: Style.highlightPurple,
+                      title: 'Deep Sleep',
+                      desc: NumFormat.toPercentWithTotal(deepSleepMinutes, minutesInBed)),
+                ],
+              ),
             ),
-          ),
+          ]
         ],
       ),
     );

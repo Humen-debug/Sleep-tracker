@@ -54,44 +54,44 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
   Widget _buildItems(BuildContext context, int index) {
     final ThemeData themeData = Theme.of(context);
     final DateTime date = DateTime.now().subtract(Duration(days: index));
-    final Iterable<SleepRecord> records = ref.watch(daySleepRecordsProvider(date));
+    final Iterable<SleepRecord> records =
+        ref.watch(daySleepRecordsProvider(date)).where((record) => record.wakeUpAt != null);
     if (records.isEmpty) return const SizedBox.shrink();
 
     final moods = records.map((record) => record.sleepQuality).whereNotNull();
     final double? moodValue = moods.isNotEmpty ? moods.average : null;
-    final List<DateTimeRange> slots = records
-        .where((record) => record.wakeUpAt != null)
-        .map((record) => DateTimeRange(start: record.start, end: record.wakeUpAt!))
-        .toList();
+    final List<DateTimeRange> slots =
+        records.map((record) => DateTimeRange(start: record.start, end: record.wakeUpAt!)).toList();
 
-    final events = records.expand((record) => record.events);
-    double asleepMinutes = 0.0;
+    final sleepEvents = records.expand((record) => record.events);
+
     double awakenMinutes = 0.0;
-    double sleepMinutes = 0.0;
     double deepSleepMinutes = 0.0;
-    double totalMinutes = 0.0;
 
-    for (int i = 0; i < events.length - 1; i++) {
-      final log = events.elementAt(i);
-      final nextLog = events.elementAt(i + 1);
-      final time = nextLog.time.difference(log.time).inMinutes;
-      switch (log.type) {
-        case SleepType.awaken:
-          awakenMinutes += time;
-          break;
-        case SleepType.sleep:
-          asleepMinutes += time;
-          sleepMinutes += time;
-          break;
-        case SleepType.deepSleep:
-          asleepMinutes += time;
-          deepSleepMinutes += time;
-          break;
+    for (int i = 0; i < sleepEvents.length - 1; i++) {
+      final log = sleepEvents.elementAt(i);
+      final nextLog = sleepEvents.elementAt(i + 1);
+      final time = nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
+      // According to our sleep-wake classification algorithm, type is divided into
+      // SleepType.awaken and SleepType.deepSleep;
+      if (log.type == SleepType.awaken) {
+        awakenMinutes += time;
+      } else if (log.type == SleepType.deepSleep) {
+        deepSleepMinutes += time;
       }
-      totalMinutes += time;
     }
 
+    if (sleepEvents.isNotEmpty) {
+      final last = sleepEvents.last;
+      final time = (records.last.wakeUpAt!.difference(last.time).inMilliseconds).abs() / (60 * 1000);
+      if (last.type == SleepType.deepSleep) {
+        deepSleepMinutes += time;
+      }
+    }
     double minutesInBed = slots.fold(0.0, (previousValue, slot) => previousValue + slot.duration.inMinutes);
+
+    double sleepMinutes = minutesInBed - awakenMinutes - deepSleepMinutes;
+    double asleepMinutes = minutesInBed - awakenMinutes;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingMd),
       margin: const EdgeInsets.only(bottom: Style.spacingSm),
@@ -177,15 +177,15 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
               SleepPhaseBlock(
                   color: Style.highlightGold,
                   title: 'Awake',
-                  desc: NumFormat.toPercentWithTotal(awakenMinutes, totalMinutes)),
+                  desc: NumFormat.toPercentWithTotal(awakenMinutes, minutesInBed)),
               SleepPhaseBlock(
                   color: Theme.of(context).primaryColor,
                   title: 'Sleep',
-                  desc: NumFormat.toPercentWithTotal(sleepMinutes, totalMinutes)),
+                  desc: NumFormat.toPercentWithTotal(sleepMinutes, minutesInBed)),
               SleepPhaseBlock(
                   color: Style.highlightPurple,
                   title: 'Deep Sleep',
-                  desc: NumFormat.toPercentWithTotal(deepSleepMinutes, totalMinutes)),
+                  desc: NumFormat.toPercentWithTotal(deepSleepMinutes, minutesInBed)),
             ],
           )
         ],
