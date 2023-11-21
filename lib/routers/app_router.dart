@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:sleep_tracker/pages/home/enter_bedtime.dart';
 import 'package:sleep_tracker/pages/home/enter_feeling.dart';
 import 'package:sleep_tracker/pages/home/index.dart';
+import 'package:sleep_tracker/pages/home/sleep_cycle.dart';
 import 'package:sleep_tracker/pages/main.dart';
 import 'package:sleep_tracker/pages/plans.dart';
 import 'package:sleep_tracker/pages/settings/alarm.dart';
@@ -38,5 +39,6 @@ class AppRouter extends _$AppRouter {
         AutoRoute(page: AlarmSettingRoute.page),
         AutoRoute(page: EnterBedtimeRoute.page),
         AutoRoute(page: EnterFeelingRoute.page),
+        AutoRoute(page: SleepCycleRoute.page),
       ];
 }

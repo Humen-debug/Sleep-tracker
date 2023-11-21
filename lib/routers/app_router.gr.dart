@@ -75,6 +75,12 @@ abstract class _$AppRouter extends RootStackRouter {
         child: const SettingsRouterPage(),
       );
     },
+    SleepCycleRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const SleepCyclePage(),
+      );
+    },
     SleepDiaryRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -238,6 +244,20 @@ class SettingsRouter extends PageRouteInfo<void> {
         );
 
   static const String name = 'SettingsRouter';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [SleepCyclePage]
+class SleepCycleRoute extends PageRouteInfo<void> {
+  const SleepCycleRoute({List<PageRouteInfo>? children})
+      : super(
+          SleepCycleRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'SleepCycleRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }

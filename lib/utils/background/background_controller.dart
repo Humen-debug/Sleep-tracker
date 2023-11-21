@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 
 import 'package:background_fetch/background_fetch.dart';
@@ -11,6 +12,7 @@ import 'package:sleep_tracker/utils/background/background_state.dart';
 /// when the app is minimized or terminated.
 abstract class BackgroundController {
   static BackgroundState state = const BackgroundState();
+  static int status = 0;
   static const Duration epoch = Duration(seconds: 30);
   // static const String _backgroundFetchDefaultId = 'flutter_background_fetch';
 
@@ -36,27 +38,29 @@ abstract class BackgroundController {
   /// retrieve accelerometer's data.
   static Future<void> init() async {
     await restoreFromStorage();
-    try {
-      var status = await BackgroundFetch.configure(
-          BackgroundFetchConfig(
-            minimumFetchInterval: 15,
-            forceAlarmManager: false,
-            stopOnTerminate: false,
-            startOnBoot: true,
-            enableHeadless: true,
-            requiresBatteryNotLow: false,
-            requiresCharging: false,
-            requiresStorageNotLow: false,
-            requiresDeviceIdle: false,
-            requiredNetworkType: NetworkType.NONE,
-          ),
-          _onBackgroundFetch,
-          _onBackgroundFetchTimeout);
-      AppLogger.I.i('Configure BackgroundFetch $status');
+    if (status != 2) {
+      try {
+        status = await BackgroundFetch.configure(
+            BackgroundFetchConfig(
+              minimumFetchInterval: 15,
+              forceAlarmManager: false,
+              stopOnTerminate: false,
+              startOnBoot: true,
+              enableHeadless: Platform.isAndroid,
+              requiresBatteryNotLow: false,
+              requiresCharging: false,
+              requiresStorageNotLow: false,
+              requiresDeviceIdle: false,
+              requiredNetworkType: NetworkType.NONE,
+            ),
+            _onBackgroundFetch,
+            _onBackgroundFetchTimeout);
+        AppLogger.I.i('Configure BackgroundFetch $status');
 
-      AppLogger.I.i('Schedule BackgroundFetch Custom');
-    } catch (e, s) {
-      AppLogger.I.e('Error configure BackgroundFetch', error: e, stackTrace: s);
+        AppLogger.I.i('Schedule BackgroundFetch Custom');
+      } catch (e, s) {
+        AppLogger.I.e('Error configure BackgroundFetch', error: e, stackTrace: s);
+      }
     }
   }
 

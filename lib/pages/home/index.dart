@@ -588,7 +588,7 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 100),
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () => context.pushRoute(const SleepCycleRoute()),
                   style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
                         backgroundColor: MaterialStateProperty.resolveWith<Color>(
                           (states) {
