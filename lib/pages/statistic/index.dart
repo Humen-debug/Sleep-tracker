@@ -16,6 +16,7 @@ import 'package:sleep_tracker/providers/auth/auth_provider.dart';
 import 'package:sleep_tracker/providers/sleep_records_provider.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/date_time.dart';
+import 'package:sleep_tracker/utils/num.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
 const double _tabRowHeight = 50.0;
@@ -337,7 +338,7 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
               final dx = x.millisecondsSinceEpoch;
               return Point(dx, y);
             },
-            getYTitles: (value) => "${(value * 100).round()}%",
+            getYTitles: NumFormat.toPercent,
             getXTitles: getLineDateTitles,
             color: Style.successColor,
             showDots: true,

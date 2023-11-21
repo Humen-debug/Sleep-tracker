@@ -8,8 +8,10 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sleep_tracker/components/moods/utils.dart';
 import 'package:sleep_tracker/components/sleep_phase_block.dart';
+// import 'package:sleep_tracker/logger/logger.dart';
 import 'package:sleep_tracker/models/sleep_record.dart';
 import 'package:sleep_tracker/providers/sleep_records_provider.dart';
+import 'package:sleep_tracker/utils/num.dart';
 import 'package:sleep_tracker/utils/style.dart';
 import 'package:sleep_tracker/utils/theme_data.dart';
 
@@ -51,9 +53,10 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
 
   Widget _buildItems(BuildContext context, int index) {
     final ThemeData themeData = Theme.of(context);
-
     final DateTime date = DateTime.now().subtract(Duration(days: index));
     final Iterable<SleepRecord> records = ref.watch(daySleepRecordsProvider(date));
+    if (records.isEmpty) return const SizedBox.shrink();
+
     final moods = records.map((record) => record.sleepQuality).whereNotNull();
     final double? moodValue = moods.isNotEmpty ? moods.average : null;
     final List<DateTimeRange> slots = records
@@ -61,7 +64,34 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
         .map((record) => DateTimeRange(start: record.start, end: record.wakeUpAt!))
         .toList();
 
-    if (records.isEmpty) return const SizedBox.shrink();
+    final events = records.expand((record) => record.events);
+    double asleepMinutes = 0.0;
+    double awakenMinutes = 0.0;
+    double sleepMinutes = 0.0;
+    double deepSleepMinutes = 0.0;
+    double totalMinutes = 0.0;
+
+    for (int i = 0; i < events.length - 1; i++) {
+      final log = events.elementAt(i);
+      final nextLog = events.elementAt(i + 1);
+      final time = nextLog.time.difference(log.time).inMinutes;
+      switch (log.type) {
+        case SleepType.awaken:
+          awakenMinutes += time;
+          break;
+        case SleepType.sleep:
+          asleepMinutes += time;
+          sleepMinutes += time;
+          break;
+        case SleepType.deepSleep:
+          asleepMinutes += time;
+          deepSleepMinutes += time;
+          break;
+      }
+      totalMinutes += time;
+    }
+
+    double minutesInBed = slots.fold(0.0, (previousValue, slot) => previousValue + slot.duration.inMinutes);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingMd),
       margin: const EdgeInsets.only(bottom: Style.spacingSm),
@@ -94,7 +124,8 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text('Time asleep', style: themeData.textTheme.bodySmall?.copyWith(color: Style.grey3)),
-                            Text('7hr 23min', style: dataTextTheme.bodyMedium)
+                            Text('${asleepMinutes ~/ 60}hr ${asleepMinutes.remainder(60).toInt()}min',
+                                style: dataTextTheme.bodyMedium)
                           ],
                         ),
                         Column(
@@ -107,7 +138,7 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
                               textAlign: TextAlign.end,
                             ),
                             Text(
-                              '97%',
+                              NumFormat.toPercentWithTotal(asleepMinutes, minutesInBed),
                               style: dataTextTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                               textAlign: TextAlign.end,
                             )
@@ -143,9 +174,18 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              const SleepPhaseBlock(color: Style.highlightGold, title: 'Awake', desc: '3%'),
-              SleepPhaseBlock(color: Theme.of(context).primaryColor, title: 'Sleep', desc: '74%'),
-              const SleepPhaseBlock(color: Style.highlightPurple, title: 'Deep Sleep', desc: '23%'),
+              SleepPhaseBlock(
+                  color: Style.highlightGold,
+                  title: 'Awake',
+                  desc: NumFormat.toPercentWithTotal(awakenMinutes, totalMinutes)),
+              SleepPhaseBlock(
+                  color: Theme.of(context).primaryColor,
+                  title: 'Sleep',
+                  desc: NumFormat.toPercentWithTotal(sleepMinutes, totalMinutes)),
+              SleepPhaseBlock(
+                  color: Style.highlightPurple,
+                  title: 'Deep Sleep',
+                  desc: NumFormat.toPercentWithTotal(deepSleepMinutes, totalMinutes)),
             ],
           )
         ],

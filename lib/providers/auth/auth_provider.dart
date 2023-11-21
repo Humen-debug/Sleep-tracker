@@ -68,6 +68,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (await restoreFromBackground()) {
       await state.localSave();
       // clear background
+      AppLogger.I.i('AuthState clear BackgroundState.');
       await BackgroundController.clear();
     }
 
@@ -133,6 +134,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return false;
     }
   }
+
+  // TODO: Fix low app performance of running acceleromenter on front-end for about 3 hours
 
   /// Set up a stream listener to the user's accelerometer event.
   /// If there any event comes and user is sleeping (i.e. [state.sleepStatus] == [SleepStatus.sleeping])

@@ -10,6 +10,7 @@ import 'package:sleep_tracker/components/period_picker/period_picker.dart';
 import 'package:sleep_tracker/components/range_indicator.dart';
 import 'package:sleep_tracker/components/sleep_period_tab_bar.dart';
 import 'package:sleep_tracker/utils/date_time.dart';
+import 'package:sleep_tracker/utils/num.dart';
 import 'package:sleep_tracker/utils/style.dart';
 import 'package:sleep_tracker/utils/theme_data.dart';
 
@@ -326,7 +327,7 @@ class _TrendIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String label = '${value.isNegative ? '-' : '+'}${(value.abs() * 100).round()}%';
+    final String label = '${value.isNegative ? '-' : '+'}${NumFormat.toPercent(value.abs())}';
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
