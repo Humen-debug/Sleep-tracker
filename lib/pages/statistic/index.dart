@@ -46,7 +46,7 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
           const MaterialStatePropertyAll(EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingSm)),
       minimumSize: const MaterialStatePropertyAll(Size(72.0, 32.0)));
 
-  final List<String> _tabs = ['Days', 'Weeks', 'Months'];
+  final List<String> _tabs = ['One Week', '6 Weeks', '6 Months'];
   final List<PeriodPickerMode> _pickerModes = [PeriodPickerMode.weeks, PeriodPickerMode.weeks, PeriodPickerMode.months];
   final List<bool> _inRange = [false, true, true];
 
@@ -139,7 +139,6 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
         onPressed: () {
           // dev. Since there is only one more button among all statistic chart.
           // It is assumed the [onPressed] only handle the [SleepHealth] case.
-
           context.pushRoute(const SleepHealthRoute());
         },
         style: _elevationButtonStyle,
@@ -193,11 +192,15 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Stores mean sleep efficiency per record.
+    List<Point<DateTime, double?>> sleepEfficiencies = [];
+    // Stores mean sleep durations per day.
     List<double> meanSleepDurations = [];
     // Stores sleep start time in minutes (since 00:00) per interval.
     List<Point<DateTime, int?>> wentToSleepAt = [];
     // Store average mood per interval.
     List<Point<DateTime, double?>> meanMoods = [];
+
     DateTime start = DateUtils.dateOnly(selectedRange.start);
     final DateTime end = DateUtils.dateOnly(selectedRange.end);
     int interval;
@@ -217,31 +220,59 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
       final Iterable<SleepRecord> sleepRecords =
           ref.watch(rangeSleepRecordsProvider(DateTimeRange(start: start, end: next)));
 
-      final double meanDuration = (sleepRecords.fold(0.0, (previousValue, record) {
-            final wakeUpAt = record.wakeUpAt;
-            return previousValue + (wakeUpAt == null ? 0 : wakeUpAt.difference(record.start).inMinutes);
-          })) /
-          interval;
-      meanSleepDurations.add(meanDuration);
+      double totalDuration = 0.0;
 
       double? meanMood;
-      int count = 0;
+      int moodCount = 0;
+      final List<Point<DateTime, int?>> wentToSleep = [];
+      final List<Point<DateTime, double?>> sleepEfficiency = [];
       for (final record in sleepRecords) {
+        final DateTime? wakeUpAt = record.wakeUpAt;
+        final DateTime start = record.start;
+        totalDuration += (wakeUpAt == null ? 0 : wakeUpAt.difference(start).inMinutes);
+
         final double? mood = record.sleepQuality;
         meanMood ??= mood;
-        if (mood != null) count++;
+        if (mood != null) moodCount++;
         if (meanMood != null && mood != null) {
-          meanMood = (meanMood * (count - 1) + mood) / count;
+          meanMood = (meanMood * (moodCount - 1) + mood) / moodCount;
         }
+
+        wentToSleep.add(Point(start, start.hour * 60 + start.minute));
+
+        final sleepEvents = record.events;
+        double awakenMinutes = 0.0;
+
+        for (int i = 0; i < sleepEvents.length - 1; i++) {
+          final log = sleepEvents.elementAt(i);
+          final nextLog = sleepEvents.elementAt(i + 1);
+          final time = nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
+          // According to our sleep-wake classification algorithm, type is divided into
+          // SleepType.awaken and SleepType.deepSleep;
+          if (log.type == SleepType.awaken) {
+            awakenMinutes += time;
+          }
+        }
+
+        if (sleepEvents.isNotEmpty && sleepRecords.last.wakeUpAt != null) {
+          final last = sleepEvents.last;
+          final time = (sleepRecords.last.wakeUpAt!.difference(last.time).inMilliseconds).abs() / (60 * 1000);
+          if (last.type == SleepType.awaken) {
+            awakenMinutes += time;
+          }
+        }
+        double minutesInBed = sleepRecords
+            .where((record) => record.wakeUpAt != null)
+            .fold(0.0, (previousValue, record) => previousValue + record.wakeUpAt!.difference(record.start).inMinutes);
+
+        double asleepMinutes = minutesInBed - awakenMinutes;
+        sleepEfficiency.add(Point(start, minutesInBed == 0 ? null : asleepMinutes / minutesInBed));
       }
-
+      final double meanDuration = totalDuration / interval;
+      meanSleepDurations.add(meanDuration);
       meanMoods.add(Point(start, meanMood));
-
-      final Iterable<Point<DateTime, int?>> wentToSleep = sleepRecords.map((record) {
-        return Point(record.start, record.start.hour * 60 + record.start.minute);
-      });
-
       wentToSleepAt.addAll(wentToSleep.isEmpty ? [Point(start, null)] : wentToSleep);
+      sleepEfficiencies.addAll(sleepEfficiency.isEmpty ? [Point(start, null)] : sleepEfficiency);
       start = next;
     }
 
@@ -290,9 +321,27 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
     }
 
     List<Widget> charts = [
-      // _buildChart(context, title: 'Sleep Health',hasMore: true, chart: LineChart(data: data),)
       _buildChart(context,
-          title: 'Sleep Duration',
+          title: 'Sleep Efficiency',
+          hasMore: true,
+          chart: LineChart(
+            data: sleepEfficiencies,
+            getSpot: (x, y) {
+              // compute dx as index in unit [day]
+              final dx = x.millisecondsSinceEpoch;
+              return Point(dx, y);
+            },
+            getYTitles: NumFormat.toPercent,
+            getXTitles: getLineDateTitles,
+            color: Style.highlightGold,
+            showDots: true,
+            minX: selectedRange.start.millisecondsSinceEpoch.toDouble(),
+            maxX: selectedRange.end.millisecondsSinceEpoch.toDouble(),
+            minY: 0.0,
+            intervalX: interval * (24.0 * 3600 * 1000),
+          )),
+      _buildChart(context,
+          title: 'Sleep Duration (avg.)',
           chart: BarChart(
             data: meanSleepDurations,
             gradientColors: [colorScheme.primary, colorScheme.tertiary],
@@ -306,7 +355,6 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
             },
             getXTitles: getBarDateTitles,
           )),
-
       _buildChart(context,
           title: 'Went To Sleep',
           chart: LineChart<DateTime, int?>(
@@ -317,8 +365,8 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
               return Point(dx, y);
             },
             getYTitles: (value) {
-              final hour = ((value / 60).floor()).toString().padLeft(2, '0');
-              final minute = value.remainder(60).round().toString().padLeft(2, '0');
+              final hour = NumFormat.toNDigits((value / 60).floor());
+              final minute = NumFormat.toNDigits(value.remainder(60).round());
               return "$hour:$minute";
             },
             getXTitles: getLineDateTitles,

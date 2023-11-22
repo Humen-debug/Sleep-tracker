@@ -22,15 +22,15 @@ class RangeIndicator extends StatelessWidget {
     this.highlightColor = Style.highlightPurple,
     this.indicatorColor = Style.grey1,
   })  : assert(min < max, 'min $min must be smaller than max $max.'),
-        assert(value >= min, 'value $value must be equal to or larger than min $min.'),
-        assert(value <= max, 'value $value must be equal to or smaller than max $max.'),
+        assert(value == null || value >= min, 'value $value must be equal to or larger than min $min.'),
+        assert(value == null || value <= max, 'value $value must be equal to or smaller than max $max.'),
         assert(lowerLimit >= min, 'lowerLimit $lowerLimit must be equal to or larger than min $min.'),
         assert(upperLimit <= max, 'upperLimit $upperLimit must be equal to or smaller than max $max.'),
         assert(lowerLimit <= upperLimit,
             'lowerLimit $lowerLimit must be equal to or smaller than upperLimit $upperLimit.');
 
   /// [value] determines the position of indicator.
-  final double value;
+  final double? value;
 
   /// [max] is the maximum value of the range
   final double max;
@@ -111,7 +111,7 @@ class _RangeIndicatorPainter extends CustomPainter {
   });
 
   /// [value] determines the position of indicator.
-  final double value;
+  final double? value;
 
   /// [max] is the maximum value of the range
   final double max;
@@ -205,18 +205,18 @@ class _RangeIndicatorPainter extends CustomPainter {
   }
 
   void paintIndicator(Canvas canvas, Size size) {
-    if (indicatorIcon == null) return;
+    if (indicatorIcon == null || value == null) return;
 
     // offset of the indicator so that the indicator can be drawn nearer to
     // the bar.
     final double offset = indicatorSize / 1.5;
 
     final double left = _isHorizontal
-        ? (size.width + (_percent(value) - 1) * _longestSize) - indicatorSize / 2
+        ? (size.width + (_percent(value!) - 1) * _longestSize) - indicatorSize / 2
         : ((size.width - _shortestSize) / 2 - offset);
     final double top = _isHorizontal
         ? (size.height - _shortestSize) / 2 - offset
-        : size.height + (_percent(max - value) - 1) * _longestSize - indicatorSize / 2;
+        : size.height + (_percent(max - value!) - 1) * _longestSize - indicatorSize / 2;
     final Rect rect = Rect.fromLTWH(left, top, indicatorSize, indicatorSize);
 
     ui.Image image = indicatorIcon!;

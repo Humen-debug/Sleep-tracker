@@ -595,6 +595,8 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
       final time = (records.last.wakeUpAt!.difference(last.time).inMilliseconds).abs() / (60 * 1000);
       if (last.type == SleepType.deepSleep) {
         deepSleepMinutes += time;
+      } else if (last.type == SleepType.awaken) {
+        awakenMinutes += time;
       }
     }
     double minutesInBed = records
