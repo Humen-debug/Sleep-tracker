@@ -519,19 +519,22 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
           : () {
               setState(() => _dayIndex = index);
             },
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Center(
-            child: Text(
-              DateFormat.E().format(day).substring(0, 1),
-              style: themeData.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: isSelected ? themeData.colorScheme.onSurface : themeData.colorScheme.secondary),
+      child: Opacity(
+        opacity: isDisabled ? 0.5 : 1,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Center(
+              child: Text(
+                DateFormat.E().format(day).substring(0, 1),
+                style: themeData.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? themeData.colorScheme.onSurface : themeData.colorScheme.secondary),
+              ),
             ),
-          ),
-          TimerPaint(progress: progress, radius: 16.0, strokeWidth: 8, showIndicator: false),
-        ],
+            TimerPaint(progress: progress, radius: 16.0, strokeWidth: 8, showIndicator: false),
+          ],
+        ),
       ),
     );
   }
@@ -557,6 +560,7 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
 
       /// Returns sleep events for every record. Only return event per 30 minutes so that the
       /// line chart is not packed with data.
+
       for (start; true; start = start.add(interval)) {
         if (start.isAfter(end)) break;
         final events = sleepEvents
@@ -566,11 +570,16 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
         SleepType type =
             sleepEvents.any((event) => !start.isBefore(event.time)) ? SleepType.deepSleep : SleepType.awaken;
         double meanType = type.value.toDouble();
-
+        // Point<DateTime, double>? maxValue;
         if (events.isNotEmpty) {
           meanType = events.map((e) => e.type.value).average;
+          // final intensities = events.map((e) => e.intensity);
+          // final maxIntensity = intensities.max;
+          // final maxLog = events.firstWhereOrNull((event) => event.intensity == maxIntensity);
+          // if (maxLog != null) maxValue = Point(maxLog.time, maxLog.type.value.toDouble());
         }
         sleepEventType.add(Point(start, meanType));
+        // if (maxValue != null) sleepEventType.add(maxValue);
       }
     }
 
@@ -704,33 +713,32 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
             intervalX: interval.inMilliseconds.toDouble(),
           ),
           // DEV
-          Text("DEV: Sleep Intensity", style: Theme.of(context).textTheme.headlineSmall),
-          LineChart<int, num>(
-            data: sleepEvents.map((e) {
-              return Point(e.time.millisecondsSinceEpoch, e.intensity);
-            }).toList(),
-            getSpot: (x, y) {
-              return Point(x, y);
-            },
-            gradientColors: [
-              Theme.of(context).primaryColor.withOpacity(0.8),
-              Theme.of(context).primaryColor.withOpacity(0.1),
-            ],
-            getYTitles: (value) {
-              return value.toStringAsFixed(2);
-            },
-            getXTitles: (value) {
-              // value here is the difference of millisecondSinceEpoch between earliest and data.
-              // Restore and return the millisecondSinceEpoch of data.
+          // Text("DEV: Sleep Intensity", style: Theme.of(context).textTheme.headlineSmall),
+          // LineChart<int, num>(
+          //   data: sleepEvents.map((e) {
+          //     return Point(e.time.millisecondsSinceEpoch, e.intensity);
+          //   }).toList(),
+          //   getSpot: (x, y) {
+          //     return Point(x, y);
+          //   },
+          //   gradientColors: [
+          //     Theme.of(context).primaryColor.withOpacity(0.8),
+          //     Theme.of(context).primaryColor.withOpacity(0.1),
+          //   ],
+          //   getYTitles: (value) {
+          //     return value.toStringAsFixed(2);
+          //   },
+          //   getXTitles: (value) {
+          //     // value here is the difference of millisecondSinceEpoch between earliest and data.
+          //     // Restore and return the millisecondSinceEpoch of data.
 
-              return DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(value.toInt()));
-            },
-            minY: 0,
-            baseLineY: 1,
-            chartHeight: 203,
-            minX: earliest?.millisecondsSinceEpoch.toDouble(),
-            maxX: end?.millisecondsSinceEpoch.toDouble(),
-          ),
+          //     return DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(value.toInt()));
+          //   },
+          //   minY: 0,
+          //   baseLineY: 1,
+          //   chartHeight: 203,
+          //   minX: earliest?.millisecondsSinceEpoch.toDouble(),
+          // ),
           if (records.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(Style.spacingMd, Style.spacingXs, Style.spacingMd, Style.spacingMd),

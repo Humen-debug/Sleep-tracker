@@ -30,6 +30,7 @@ class LineChart<T extends Object?, K extends num?> extends StatelessWidget {
     this.baseLineY,
     this.intervalX,
     this.intervalY,
+    this.isCurved = true,
   }) : gradientColors =
             gradientColors ?? (color != null ? <Color>[color.withOpacity(0.8), color.withOpacity(0.1)] : []);
 
@@ -74,6 +75,7 @@ class LineChart<T extends Object?, K extends num?> extends StatelessWidget {
   final double? baseLineY;
   final double? intervalX;
   final double? intervalY;
+  final bool isCurved;
 
   @override
   Widget build(BuildContext context) {
@@ -157,7 +159,7 @@ class LineChart<T extends Object?, K extends num?> extends StatelessWidget {
                 return y == null ? fl.FlSpot.nullSpot : fl.FlSpot(x, y);
               }).toList(),
               dotData: fl.FlDotData(show: showDots),
-              isCurved: true,
+              isCurved: isCurved,
               barWidth: 3,
               curveSmoothness: .3,
               preventCurveOverShooting: true,

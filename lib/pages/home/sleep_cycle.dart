@@ -97,19 +97,22 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
           : () {
               setState(() => _dayIndex = index);
             },
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Center(
-            child: Text(
-              DateFormat.E().format(day).substring(0, 1),
-              style: themeData.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: isSelected ? themeData.colorScheme.onSurface : themeData.colorScheme.secondary),
+      child: Opacity(
+        opacity: isDisabled ? 0.5 : 1,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Center(
+              child: Text(
+                DateFormat.E().format(day).substring(0, 1),
+                style: themeData.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? themeData.colorScheme.onSurface : themeData.colorScheme.secondary),
+              ),
             ),
-          ),
-          TimerPaint(progress: progress, radius: 16.0, strokeWidth: 8, showIndicator: false),
-        ],
+            TimerPaint(progress: progress, radius: 16.0, strokeWidth: 8, showIndicator: false),
+          ],
+        ),
       ),
     );
   }
@@ -151,10 +154,16 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
             sleepEvents.any((event) => !start.isBefore(event.time)) ? SleepType.deepSleep : SleepType.awaken;
         double meanType = type.value.toDouble();
 
+        // Point<DateTime, double>? maxValue;
         if (events.isNotEmpty) {
           meanType = events.map((e) => e.type.value).average;
+          // final intensities = events.map((e) => e.intensity);
+          // final maxIntensity = intensities.max;
+          // final maxLog = events.firstWhereOrNull((event) => event.intensity == maxIntensity);
+          // if (maxLog != null) maxValue = Point(maxLog.time, maxLog.type.value.toDouble());
         }
         sleepEventType.add(Point(start, meanType));
+        // if (maxValue != null) sleepEventType.add(maxValue);
       }
     }
 
