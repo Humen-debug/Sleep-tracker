@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +12,6 @@ import 'package:sleep_tracker/components/sleep_period_tab_bar.dart';
 import 'package:sleep_tracker/models/sleep_record.dart';
 import 'package:sleep_tracker/providers/auth/auth_provider.dart';
 import 'package:sleep_tracker/providers/sleep_records_provider.dart';
-import 'package:sleep_tracker/utils/date_time.dart';
 import 'package:sleep_tracker/utils/num.dart';
 import 'package:sleep_tracker/utils/style.dart';
 import 'package:sleep_tracker/utils/theme_data.dart';
@@ -19,6 +20,46 @@ const double _tabRowHeight = 42.0;
 const double _tabBarHeight = _tabRowHeight + Style.spacingMd;
 const double _appBarHeight = _tabBarHeight + kToolbarHeight;
 const double _infoButtonHeight = 20.0;
+
+double dot(List<num> A, List<num> B) {
+  if (A.length != B.length) return 0;
+  double sum = 0.0;
+  for (int i = 0; i < A.length; i++) {
+    sum += (A[i] * B[i]);
+  }
+  return sum;
+}
+
+double cosineSimilarity(List<num> A, List<num> B) {
+  if (A.isEmpty && B.isEmpty) {
+    return 1;
+  } else if (A.isEmpty && B.isNotEmpty || A.isNotEmpty && B.isEmpty) {
+    return 0;
+  }
+  final double meanA = A.average;
+  final double meanB = B.average;
+
+  final double varianceA =
+      A.map((x) => math.pow(x - meanA, 2)).reduce((value, element) => value + element) / (A.length - 1);
+  final double varianceB =
+      B.map((x) => math.pow(x - meanA, 2)).reduce((value, element) => value + element) / (B.length - 1);
+
+  final double stdA = math.sqrt(varianceA);
+  final double stdB = math.sqrt(varianceB);
+  // The time-series data sets should be normalized.
+  List<double> aNorm = A.map((x) => (x - meanA) / stdA).toList();
+  List<double> bNorm = B.map((x) => (x - meanB) / stdB).toList();
+
+  // Determining the dot product of the normalized time series data sets.
+  final double dotProduct = dot(aNorm, bNorm);
+
+  // Determining the Euclidean norm for each normalized time-series data collection.
+  final double normA = math.sqrt(A.reduce((value, x) => value + math.pow(x, 2)));
+  final double normB = math.sqrt(B.reduce((value, x) => value + math.pow(x, 2)));
+
+  final cosineSim = dotProduct / (normA * normB);
+  return cosineSim;
+}
 
 @RoutePage()
 class SleepHealthPage extends ConsumerStatefulWidget {
@@ -45,9 +86,17 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
   ];
   final List<String Function(double value)> _formats = [
     NumFormat.toPercent,
-    (value) => "${value ~/ 60}h ${value.remainder(60).round()}m",
+    (value) {
+      final int hours = value ~/ 60;
+      final int minutes = value.remainder(60).round();
+      return "${hours > 0 ? '${hours}h ' : ''}${minutes > 0 ? '${minutes}m' : ''}";
+    },
     NumFormat.toPercent,
-    (value) => "${value ~/ 60}h ${value.remainder(60).round()}m",
+    (value) {
+      final int hours = value ~/ 60;
+      final int minutes = value.remainder(60).round();
+      return "${hours > 0 ? '${hours}h ' : ''}${minutes > 0 ? '${minutes}m' : ''}";
+    },
     NumFormat.toPercent,
   ];
 
@@ -81,11 +130,13 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
   void initState() {
     super.initState();
     final DateTime now = DateTime.now();
-    final DateTime first = ref.read(authStateProvider).sleepRecords.lastOrNull?.start ?? now;
-    firstDate =
-        DateUtils.addMonthsToMonthDate(DateUtils.dateOnly(DateTimeUtils.mostRecentWeekday(first, 0)), -_chartLength);
-    lastDate = now;
-    selectedRange = DateTimeRange(start: DateTimeUtils.mostRecentWeekday(now, 0), end: lastDate);
+    // Adds one day because [rangeSleepRecordsProvider] proceeds range with [DateUtils.datesOnly].
+    // if not adding one day, the starting time will be midnight and there is non data shown as result.
+    final DateTime last =
+        DateUtils.addDaysToDate(ref.read(authStateProvider).sleepRecords.firstOrNull?.start ?? now, 1);
+    firstDate = DateUtils.addMonthsToMonthDate(last, -_chartLength);
+    lastDate = last;
+    selectedRange = DateTimeRange(start: DateUtils.addDaysToDate(lastDate, -_chartLength), end: lastDate);
   }
 
   void _handleTabChanged(int index) {
@@ -184,7 +235,12 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
                           color: data == null ? Style.grey3 : Style.grey1,
                         )),
                     const SizedBox(width: Style.spacingSm),
-                    if (trend != null) _TrendIndicator(value: trend, indicatorColor: Style.highlightGold),
+                    if (trend != null)
+                      _TrendIndicator(
+                        value: trend,
+                        indicatorColor: Style.highlightGold,
+                        rangeConditions: const [-0.1, 0.1],
+                      ),
                   ],
                 ),
                 const SizedBox(height: Style.spacingXs),
@@ -208,6 +264,9 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
   /// The first element is the [sleepEfficiencies] for the line chart.
   /// The other elements are the average sleep efficiency, average time asleep,
   /// regularity, average WASO and average sleep quality.
+  ///
+  /// For the regularity, Cosine Similarity was used to calculated the similarity of two time
+  /// series. https://www.geeksforgeeks.org/similarity-search-for-time-series-data/
   List _computeStatistic(DateTime start, DateTime end) {
     // Stores mean sleep efficiency per record.
     List<Point<DateTime, double?>> sleepEfficiencies = [];
@@ -218,28 +277,22 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
     // out of bed)
     double wasoInMinutes = 0.0;
     double totalAsleepMinutes = 0.0;
-    // Stores the similarity when to bed
+    // Stores the similarity of when to bed
     double? regularity;
 
     int moodCount = 0;
+    int dayCount = 0;
     int count = 0;
 
-    int interval;
-    if (_tabIndex == 0) {
-      //  interval as single day
-      interval = 1;
-    } else if (_tabIndex == 1) {
-      //  interval as single week
-      interval = DateTime.daysPerWeek;
-    } else {
-      interval = DateUtils.getDaysInMonth(start.year, start.month);
-    }
     while (!start.isAfter(end)) {
-      // update interval if [_tabIndex] == 2
-      if (_tabIndex == 2) interval = DateUtils.getDaysInMonth(start.year, start.month);
-      final DateTime next = DateUtils.addDaysToDate(start, interval);
-      final Iterable<SleepRecord> sleepRecords =
-          ref.watch(rangeSleepRecordsProvider(DateTimeRange(start: start, end: next)));
+      final next = DateUtils.addDaysToDate(start, 1);
+      final Iterable<SleepRecord> sleepRecords = ref.watch(daySleepRecordsProvider(start));
+      final Iterable<SleepRecord> nextSleepRecords = ref.watch(daySleepRecordsProvider(next));
+      dayCount++;
+
+      regularity = (regularity ?? 0) +
+          cosineSimilarity(sleepRecords.map((record) => record.start.hour * 60 + record.start.minute).toList(),
+              nextSleepRecords.map((record) => record.start.hour * 60 + record.start.minute).toList());
 
       final List<Point<DateTime, double?>> sleepEfficiency = [];
       for (final record in sleepRecords) {
@@ -300,11 +353,13 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
     double? meanEfficiency = count == 0 ? null : totalSleepEfficiency / count;
     double? meanAsleepTime = count == 0 ? null : totalAsleepMinutes / count;
     double? meanWASO = count == 0 ? null : wasoInMinutes / count;
+    double? meanRegularity = (regularity == null || dayCount == 0) ? null : regularity / dayCount;
+    print("$end, $meanRegularity");
     return [
       sleepEfficiencies,
       meanEfficiency,
       meanAsleepTime,
-      regularity,
+      meanRegularity,
       meanWASO,
       meanMood,
     ];
@@ -314,22 +369,29 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
   Widget build(BuildContext context) {
     DateTime start = DateUtils.dateOnly(selectedRange.start);
     DateTime end = DateUtils.dateOnly(selectedRange.end);
+
     final currentData = _computeStatistic(start, end);
     // Stores mean sleep efficiency per record.
     List<Point<DateTime, double?>> sleepEfficiencies = currentData[0];
     // Returns statistic in current interval.
     _data = List<double?>.from(currentData.sublist(1));
-
+    int interval;
     // Computes previous interval
     if (_tabIndex == 0) {
       end = DateUtils.addDaysToDate(end, -_chartLength);
       start = DateUtils.addDaysToDate(end, -_chartLength);
+
+      interval = 1; //  interval as single day
     } else if (_tabIndex == 1) {
       end = DateUtils.addDaysToDate(end, -(DateTime.daysPerWeek * _chartLength) + 1);
       start = DateUtils.addDaysToDate(end, -(DateTime.daysPerWeek * _chartLength) + 1);
+
+      interval = DateTime.daysPerWeek; //  interval as single week
     } else {
       end = DateUtils.addMonthsToMonthDate(end, -_chartLength);
       start = DateUtils.addMonthsToMonthDate(end, -_chartLength);
+
+      interval = DateUtils.getDaysInMonth(start.year, start.month); // interval as a month
     }
     final previousData = List<double?>.from(_computeStatistic(start, end).sublist(1));
     _trends = _data.mapIndexed((index, data) {
@@ -337,17 +399,6 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
       if (previous == null || data == null) return null;
       return data - previous;
     }).toList();
-
-    int interval;
-    if (_tabIndex == 0) {
-      //  interval as single day
-      interval = 1;
-    } else if (_tabIndex == 1) {
-      //  interval as single week
-      interval = DateTime.daysPerWeek;
-    } else {
-      interval = DateUtils.getDaysInMonth(start.year, start.month);
-    }
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -371,40 +422,41 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
         child: Column(
           children: [
             const SizedBox(height: _appBarHeight + Style.spacingXl),
-            ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 186),
-                child: LineChart(
-                  data: sleepEfficiencies,
-                  getSpot: (x, y) {
-                    // compute dx as index in unit [day]
-                    final dx = x.millisecondsSinceEpoch;
-                    return Point(dx, y);
-                  },
-                  getYTitles: NumFormat.toPercent,
-                  getXTitles: (double value) {
-                    // value is in milliSecondsSinceEpoch.
-                    if (value == value.roundToDouble()) {
-                      DateFormat format;
+            Padding(
+              padding: const EdgeInsets.only(right: Style.spacingMd + Style.spacingXxs),
+              child: LineChart(
+                data: sleepEfficiencies,
+                getSpot: (x, y) {
+                  // compute dx as index in unit [day]
+                  final dx = x.millisecondsSinceEpoch;
+                  return Point(dx, y);
+                },
+                getYTitles: NumFormat.toPercent,
+                getXTitles: (double value) {
+                  // value is in milliSecondsSinceEpoch.
+                  if (value == value.roundToDouble()) {
+                    DateFormat format;
 
-                      if (_tabIndex == 0) {
-                        format = DateFormat.Md();
-                      } else if (_tabIndex == 1) {
-                        format = DateFormat.Md();
-                      } else {
-                        format = DateFormat.MMM();
-                      }
-
-                      return format.format(DateTime.fromMillisecondsSinceEpoch(value.toInt()));
+                    if (_tabIndex == 0) {
+                      format = DateFormat.Md();
+                    } else if (_tabIndex == 1) {
+                      format = DateFormat.Md();
+                    } else {
+                      format = DateFormat.MMM();
                     }
-                    return '';
-                  },
-                  color: Style.highlightGold,
-                  showDots: true,
-                  minX: selectedRange.start.millisecondsSinceEpoch.toDouble(),
-                  maxX: selectedRange.end.millisecondsSinceEpoch.toDouble(),
-                  minY: 0.0,
-                  intervalX: interval * (24.0 * 3600 * 1000),
-                )),
+
+                    return format.format(DateTime.fromMillisecondsSinceEpoch(value.toInt()));
+                  }
+                  return '';
+                },
+                color: Style.highlightGold,
+                showDots: true,
+                minX: selectedRange.start.millisecondsSinceEpoch.toDouble(),
+                maxX: selectedRange.end.millisecondsSinceEpoch.toDouble(),
+                minY: 0.0,
+                intervalX: interval * (24.0 * 3600 * 1000),
+              ),
+            ),
             // Padding(
             //   padding: const EdgeInsets.symmetric(vertical: Style.spacingLg),
             //   child: periodHeader,
@@ -460,9 +512,9 @@ class _TrendIndicator extends StatelessWidget {
     if (isNeutral) {
       indicator = Container(width: 8, height: 1, color: indicatorColor);
     } else if (value > upperValue) {
-      indicator = SvgPicture.asset('assets/icons/arrow-up.svg', color: indicatorColor);
+      indicator = SvgPicture.asset('assets/icons/arrow-up.svg', color: indicatorColor, height: 8, width: 14);
     } else {
-      indicator = SvgPicture.asset('assets/icons/arrow-down.svg', color: indicatorColor);
+      indicator = SvgPicture.asset('assets/icons/arrow-down.svg', color: indicatorColor, height: 8, width: 14);
     }
     return SizedBox(height: 8, child: Center(child: indicator));
   }

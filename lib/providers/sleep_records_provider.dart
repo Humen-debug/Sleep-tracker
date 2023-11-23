@@ -19,7 +19,7 @@ final rangeSleepRecordsProvider = Provider.family<Iterable<SleepRecord>, DateTim
   return ref
       .watch(authStateProvider)
       .sleepRecords
-      .skipWhile((record) => record.start.isAfter(r.end))
+      .skipWhile((record) => DateUtils.dateOnly(record.start).isAfter(r.start))
       .takeWhile((record) => !DateUtils.dateOnly(record.start).isBefore(r.start))
       .toList()
       .reversed;
