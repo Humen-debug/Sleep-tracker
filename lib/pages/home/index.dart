@@ -544,15 +544,15 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
     final DateTime? end = sleepEvents.lastOrNull?.time;
     final List<Point<DateTime, double>> sleepEventType = [];
 
+    Duration interval = const Duration(minutes: 5);
     if (end != null) {
       DateTime start = sleepEvents.first.time;
-      Duration interval;
-      if (end.difference(start).inHours > 2) {
+      if (end.difference(start).inHours > 6) {
+        interval = const Duration(hours: 1);
+      } else if (end.difference(start).inHours > 2) {
         interval = const Duration(minutes: 30);
       } else if (end.difference(start).inMinutes > 59) {
         interval = const Duration(minutes: 15);
-      } else {
-        interval = const Duration(minutes: 5);
       }
 
       /// Returns sleep events for every record. Only return event per 30 minutes so that the
@@ -563,10 +563,12 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
             .skipWhile((event) => event.time.isBefore(start))
             .takeWhile((event) => !event.time.isAfter(start.add(interval)));
 
-        double meanType = SleepType.awaken.value.toDouble();
+        SleepType type =
+            sleepEvents.any((event) => !start.isBefore(event.time)) ? SleepType.deepSleep : SleepType.awaken;
+        double meanType = type.value.toDouble();
 
         if (events.isNotEmpty) {
-          meanType = events.map((e) => e.intensity).average;
+          meanType = events.map((e) => e.type.value).average;
         }
         sleepEventType.add(Point(start, meanType));
       }
@@ -683,10 +685,23 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
               final int milliSecond = value.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
               return DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
             },
+            getTooltipLabels: (x, y) {
+              final int milliSecond = x.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
+              final String time = DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
+              int index = y.round();
+              if (index >= 9) {
+                return '$time, Awake';
+              } else if (index >= 2) {
+                return '$time, Sleep';
+              } else {
+                return '$time, Deep Sleep';
+              }
+            },
             minY: 0,
             maxY: 9,
             chartHeight: 203,
             intervalY: 1.0,
+            intervalX: interval.inMilliseconds.toDouble(),
           ),
           // DEV
           Text("DEV: Sleep Intensity", style: Theme.of(context).textTheme.headlineSmall),
