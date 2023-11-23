@@ -18,6 +18,7 @@ class LineChart<T extends Object?, K extends num?> extends StatelessWidget {
     this.chartHeight = _lineChartHeight,
     this.getXTitles,
     this.getYTitles,
+    this.getTooltipLabels,
     this.getSpot,
     this.showDots = false,
     this.yTitleWidth = 44.0,
@@ -49,6 +50,10 @@ class LineChart<T extends Object?, K extends num?> extends StatelessWidget {
   /// Functions that takes the y-indices data and returns the corresponding
   /// titles.
   final String Function(double value)? getYTitles;
+
+  /// Functions that takes both x-indices and y-indices data and returns the corresponding
+  /// touch tool tip.
+  final String Function(double x, double y)? getTooltipLabels;
 
   /// Functions that takes the index and y-axis value and returns the
   /// corresponding spot.
@@ -95,10 +100,11 @@ class LineChart<T extends Object?, K extends num?> extends StatelessWidget {
                     (fl.LineBarSpot touchedSpot) {
                       final index = touchedSpot.x;
                       final value = touchedSpot.y;
+                      final String? label = getTooltipLabels?.call(index, value);
                       final x = getXTitles?.call(index) ?? index.toString();
                       final y = getYTitles?.call(value) ?? value.toString();
                       return fl.LineTooltipItem(
-                        '$x${x.isNotEmpty ? ',' : ''} $y',
+                        label ?? '$x${x.isNotEmpty ? ',' : ''} $y',
                         Theme.of(context)
                             .textTheme
                             .bodySmall!
