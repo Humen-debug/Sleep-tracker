@@ -354,7 +354,7 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
     double? meanAsleepTime = count == 0 ? null : totalAsleepMinutes / count;
     double? meanWASO = count == 0 ? null : wasoInMinutes / count;
     double? meanRegularity = (regularity == null || dayCount == 0) ? null : regularity / dayCount;
-    print("$end, $meanRegularity");
+
     return [
       sleepEfficiencies,
       meanEfficiency,

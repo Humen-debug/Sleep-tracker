@@ -72,7 +72,7 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
     final DateTime first = ref.read(authStateProvider).sleepRecords.lastOrNull?.start ?? now;
     firstDate =
         DateUtils.addMonthsToMonthDate(DateUtils.dateOnly(DateTimeUtils.mostRecentWeekday(first, 0)), -_chartLength);
-    lastDate = DateUtils.dateOnly(DateTimeUtils.mostNearestWeekday(now, 6));
+    lastDate = DateTimeUtils.mostNearestWeekday(now, 6);
   }
 
   void _handleTabChanged(int index) {
