@@ -16,7 +16,7 @@ final daySleepRecordsProvider = Provider.family<Iterable<SleepRecord>, DateTime>
 final rangeSleepRecordsProvider = Provider.family<Iterable<SleepRecord>, DateTimeRange>((ref, range) {
   final r = DateUtils.datesOnly(range);
   Iterable<SleepRecord> res =
-      ref.watch(authStateProvider).sleepRecords.skipWhile((record) => r.end.isBefore(DateUtils.dateOnly(record.start)));
+      ref.watch(authStateProvider).sleepRecords.skipWhile((record) => !r.end.isAfter(DateUtils.dateOnly(record.start)));
 
   res = res.takeWhile((record) => !DateUtils.dateOnly(record.start).isBefore(r.start));
 
