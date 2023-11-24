@@ -10,6 +10,7 @@ import 'package:sleep_tracker/providers/auth_provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:sleep_tracker/utils/background/background_controller.dart';
 import 'package:sleep_tracker/utils/background/background_state.dart';
+import 'package:sleep_tracker/utils/demo_user.dart';
 import 'package:uuid/uuid.dart';
 
 Stream<DateTime> getPeriodicStream([Duration interval = const Duration(seconds: 1)]) async* {
@@ -52,8 +53,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<bool> syncEverything() async {
     try {
-      await Future.wait([]);
-    } catch (e) {
+      await Future.wait([
+        syncUser(),
+        syncSleepRecords(),
+      ]);
+    } catch (e, s) {
+      AppLogger.I.e('Error Syncing AuthState', error: e, stackTrace: s);
       return false;
     }
     return true;
@@ -61,8 +66,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> init() async {
     await restoreFromStorage();
-
-    if (state.token.isNotEmpty && await syncEverything()) {
+    // TODO: add back the token verification after creating a demo user
+    if (await syncEverything()) {
       await state.localSave();
     }
     if (await restoreFromBackground()) {
@@ -208,9 +213,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await state.localSave();
   }
 
+  Future<User> syncUser() async {
+    final me = createUser();
+    await setUser(me);
+    return me;
+  }
+
   Future<List<SleepRecord>> syncSleepRecords() async {
+    final DateTime now = DateTime.now();
+    final res = createRecords(now.subtract(const Duration(days: 30)), now);
     await state.localSave();
-    return [];
+    return res;
   }
 
   Future<void> createSleepRecord({required DateTimeRange range}) async {

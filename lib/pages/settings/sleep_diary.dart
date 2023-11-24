@@ -215,7 +215,6 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      // dev list
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(Style.spacingMd),
