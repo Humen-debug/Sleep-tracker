@@ -193,7 +193,7 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
   @override
   Widget build(BuildContext context) {
     // Stores mean sleep efficiency per record.
-    List<Point<DateTime, double?>> sleepEfficiencies = [];
+    List<Point<DateTime, double?>> sleepEfficiency = [];
     // Stores mean sleep durations per day.
     List<double> meanSleepDurations = [];
     // Stores sleep start time in minutes (since 00:00) per interval.
@@ -216,20 +216,22 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
     while (!start.isAfter(end)) {
       // update interval if [_tabIndex] == 2
       if (_tabIndex == 2) interval = DateUtils.getDaysInMonth(start.year, start.month);
-      final DateTime next = DateUtils.addDaysToDate(start, interval);
+      final next = DateUtils.addDaysToDate(start, interval);
       final Iterable<SleepRecord> sleepRecords =
           ref.watch(rangeSleepRecordsProvider(DateTimeRange(start: start, end: next)));
 
-      double totalDuration = 0.0;
+      double minutesInBed = 0.0;
 
       double? meanMood;
       int moodCount = 0;
       final List<Point<DateTime, int?>> wentToSleep = [];
-      final List<Point<DateTime, double?>> sleepEfficiency = [];
+
+      double awakenMinutes = 0.0;
       for (final record in sleepRecords) {
         final DateTime? wakeUpAt = record.wakeUpAt;
         final DateTime start = record.start;
-        totalDuration += (wakeUpAt == null ? 0 : wakeUpAt.difference(start).inMinutes);
+
+        minutesInBed += (wakeUpAt == null ? 0 : wakeUpAt.difference(start).inMinutes);
 
         final double? mood = record.sleepQuality;
         meanMood ??= mood;
@@ -241,7 +243,6 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
         wentToSleep.add(Point(start, start.hour * 60 + start.minute));
 
         final sleepEvents = record.events;
-        double awakenMinutes = 0.0;
 
         for (int i = 0; i < sleepEvents.length - 1; i++) {
           final log = sleepEvents.elementAt(i);
@@ -261,18 +262,14 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
             awakenMinutes += time;
           }
         }
-        double minutesInBed = sleepRecords
-            .where((record) => record.wakeUpAt != null)
-            .fold(0.0, (previousValue, record) => previousValue + record.wakeUpAt!.difference(record.start).inMinutes);
-
-        double asleepMinutes = minutesInBed - awakenMinutes;
-        sleepEfficiency.add(Point(start, minutesInBed == 0 ? null : asleepMinutes / minutesInBed));
       }
-      final double meanDuration = totalDuration / interval;
+      final double meanDuration = minutesInBed / interval;
       meanSleepDurations.add(meanDuration);
       meanMoods.add(Point(start, meanMood));
       wentToSleepAt.addAll(wentToSleep.isEmpty ? [Point(start, null)] : wentToSleep);
-      sleepEfficiencies.addAll(sleepEfficiency.isEmpty ? [Point(start, null)] : sleepEfficiency);
+
+      double asleepMinutes = minutesInBed - awakenMinutes;
+      sleepEfficiency.add(Point(start, minutesInBed == 0 ? null : asleepMinutes / minutesInBed));
       start = next;
     }
 
@@ -325,7 +322,7 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
           title: 'Sleep Efficiency',
           hasMore: true,
           chart: LineChart(
-            data: sleepEfficiencies,
+            data: sleepEfficiency,
             getSpot: (x, y) {
               // compute dx as index in unit [day]
               final dx = x.millisecondsSinceEpoch;
@@ -334,7 +331,7 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
             getYTitles: NumFormat.toPercent,
             getXTitles: getLineDateTitles,
             color: Style.highlightGold,
-            showDots: true,
+            // showDots: true,
             minX: selectedRange.start.millisecondsSinceEpoch.toDouble(),
             maxX: selectedRange.end.millisecondsSinceEpoch.toDouble(),
             // minY: 0.0,
@@ -371,7 +368,7 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
             },
             getXTitles: getLineDateTitles,
             color: Style.highlightPurple,
-            showDots: true,
+            // showDots: true,
             minX: selectedRange.start.millisecondsSinceEpoch.toDouble(),
             maxX: selectedRange.end.millisecondsSinceEpoch.toDouble(),
             maxY: 24 * 60 - 1,

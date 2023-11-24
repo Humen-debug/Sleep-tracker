@@ -221,7 +221,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<List<SleepRecord>> syncSleepRecords() async {
     final DateTime now = DateTime.now();
-    final res = createRecords(now.subtract(const Duration(days: 30)), now);
+    final res = createRecords(now.subtract(const Duration(days: 180)), now);
     state = state.copyWith(sleepRecords: res);
     await state.localSave();
     return res;

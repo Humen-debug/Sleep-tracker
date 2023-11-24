@@ -36,6 +36,7 @@ double cosineSimilarity(List<double> A, List<double> B) {
   } else if (A.isEmpty && B.isNotEmpty || A.isNotEmpty && B.isEmpty) {
     return 0;
   }
+
   final double meanA = A.average;
   final double meanB = B.average;
 
@@ -56,8 +57,9 @@ double cosineSimilarity(List<double> A, List<double> B) {
   // Determining the Euclidean norm for each normalized time-series data collection.
   final double normA = math.sqrt(A.reduce((value, x) => value + math.pow(x, 2)));
   final double normB = math.sqrt(B.reduce((value, x) => value + math.pow(x, 2)));
-
+  if (normA == 0 || normB == 0 || dotProduct == 0) return 1;
   final cosineSim = dotProduct / (normA * normB);
+  if (cosineSim.isNaN) return 1;
   return cosineSim;
 }
 
@@ -305,8 +307,10 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
           meanMood = (meanMood * (moodCount - 1) + mood) / moodCount;
         }
 
+        final DateTime? wakeUpAt = record.wakeUpAt;
         final DateTime start = record.start;
         final sleepEvents = record.events;
+        final int minutesInBed = (wakeUpAt == null ? 0 : wakeUpAt.difference(start).inMinutes);
         double awakenMinutes = 0.0;
         bool hasFellAsleep = false;
 
@@ -336,9 +340,6 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
             awakenMinutes += time;
           }
         }
-        double minutesInBed = sleepRecords
-            .where((record) => record.wakeUpAt != null)
-            .fold(0.0, (previousValue, record) => previousValue + record.wakeUpAt!.difference(record.start).inMinutes);
 
         double asleepMinutes = minutesInBed - awakenMinutes;
         totalAsleepMinutes += asleepMinutes;
@@ -454,11 +455,14 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
                   }
                   return '';
                 },
+                getTooltipLabels: (x, y) {
+                  final date = DateFormat.Md().format(DateTime.fromMillisecondsSinceEpoch(x.toInt()));
+                  final value = NumFormat.toPercent(y);
+                  return '$date,$value';
+                },
                 color: Style.highlightGold,
-                showDots: true,
                 minX: selectedRange.start.millisecondsSinceEpoch.toDouble(),
                 maxX: selectedRange.end.millisecondsSinceEpoch.toDouble(),
-                minY: 0.0,
                 intervalX: interval * (24.0 * 3600 * 1000),
               ),
             ),

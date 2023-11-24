@@ -25,7 +25,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   late User user;
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
-
   late final TextEditingController _birthdayController;
 
   @override
