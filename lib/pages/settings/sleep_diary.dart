@@ -27,7 +27,7 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
   final ScrollController _scrollController = ScrollController();
   final int _dayToGenerate = 30 * 3;
   bool _showFab = false;
-  final Duration _fabAnimationDuration = const Duration(milliseconds: 300);
+  final Duration _fabAnimationDuration = const Duration(milliseconds: 500);
 
   @override
   void initState() {
@@ -63,31 +63,33 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
     final List<DateTimeRange> slots =
         records.map((record) => DateTimeRange(start: record.start, end: record.wakeUpAt!)).toList();
 
-    final sleepEvents = records.expand((record) => record.events);
-
     double awakenMinutes = 0.0;
     double deepSleepMinutes = 0.0;
 
-    for (int i = 0; i < sleepEvents.length - 1; i++) {
-      final log = sleepEvents.elementAt(i);
-      final nextLog = sleepEvents.elementAt(i + 1);
-      final time = nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
-      // According to our sleep-wake classification algorithm, type is divided into
-      // SleepType.awaken and SleepType.deepSleep;
-      if (log.type == SleepType.awaken) {
-        awakenMinutes += time;
-      } else if (log.type == SleepType.deepSleep) {
-        deepSleepMinutes += time;
+    for (final record in records) {
+      final sleepEvents = record.events;
+      for (int i = 0; i < sleepEvents.length - 1; i++) {
+        final log = sleepEvents.elementAt(i);
+        final nextLog = sleepEvents.elementAt(i + 1);
+        final time = nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
+        // According to our sleep-wake classification algorithm, type is divided into
+        // SleepType.awaken and SleepType.deepSleep;
+        if (log.type == SleepType.awaken) {
+          awakenMinutes += time;
+        } else if (log.type == SleepType.deepSleep) {
+          deepSleepMinutes += time;
+        }
+      }
+
+      if (sleepEvents.isNotEmpty && record.wakeUpAt != null) {
+        final last = sleepEvents.last;
+        final time = (record.wakeUpAt!.difference(last.time).inMilliseconds).abs() / (60 * 1000);
+        if (last.type == SleepType.deepSleep) {
+          deepSleepMinutes += time;
+        }
       }
     }
 
-    if (sleepEvents.isNotEmpty) {
-      final last = sleepEvents.last;
-      final time = (records.last.wakeUpAt!.difference(last.time).inMilliseconds).abs() / (60 * 1000);
-      if (last.type == SleepType.deepSleep) {
-        deepSleepMinutes += time;
-      }
-    }
     double minutesInBed = slots.fold(0.0, (previousValue, slot) => previousValue + slot.duration.inMinutes);
 
     double sleepMinutes = minutesInBed - awakenMinutes - deepSleepMinutes;

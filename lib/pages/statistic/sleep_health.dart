@@ -30,7 +30,7 @@ double dot(List<num> A, List<num> B) {
   return sum;
 }
 
-double cosineSimilarity(List<num> A, List<num> B) {
+double cosineSimilarity(List<double> A, List<double> B) {
   if (A.isEmpty && B.isEmpty) {
     return 1;
   } else if (A.isEmpty && B.isNotEmpty || A.isNotEmpty && B.isEmpty) {
@@ -291,8 +291,8 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
       dayCount++;
 
       regularity = (regularity ?? 0) +
-          cosineSimilarity(sleepRecords.map((record) => record.start.hour * 60 + record.start.minute).toList(),
-              nextSleepRecords.map((record) => record.start.hour * 60 + record.start.minute).toList());
+          cosineSimilarity(sleepRecords.map((record) => (record.start.hour * 60.0 + record.start.minute)).toList(),
+              nextSleepRecords.map((record) => record.start.hour * 60.0 + record.start.minute).toList());
 
       final List<Point<DateTime, double?>> sleepEfficiency = [];
       for (final record in sleepRecords) {
@@ -329,9 +329,9 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
           }
         }
 
-        if (sleepEvents.isNotEmpty && sleepRecords.last.wakeUpAt != null) {
+        if (sleepEvents.isNotEmpty && record.wakeUpAt != null) {
           final last = sleepEvents.last;
-          final time = (sleepRecords.last.wakeUpAt!.difference(last.time).inMilliseconds).abs() / (60 * 1000);
+          final time = (record.wakeUpAt!.difference(last.time).inMilliseconds).abs() / (60 * 1000);
           if (last.type == SleepType.awaken) {
             awakenMinutes += time;
           }
@@ -362,7 +362,12 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
       meanRegularity,
       meanWASO,
       meanMood,
-    ];
+    ].map((data) {
+      if (data is num) {
+        if (data.isNaN || data.isInfinite) return null;
+      }
+      return data;
+    }).toList();
   }
 
   @override
@@ -396,8 +401,8 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
     final previousData = List<double?>.from(_computeStatistic(start, end).sublist(1));
     _trends = _data.mapIndexed((index, data) {
       final previous = previousData[index];
-      if (previous == null || data == null) return null;
-      return data - previous;
+      if (previous == null || data == null || previous == 0) return null;
+      return (data - previous) / previous;
     }).toList();
 
     return Scaffold(
@@ -457,10 +462,6 @@ class _SleepHealthPageState extends ConsumerState<SleepHealthPage> {
                 intervalX: interval * (24.0 * 3600 * 1000),
               ),
             ),
-            // Padding(
-            //   padding: const EdgeInsets.symmetric(vertical: Style.spacingLg),
-            //   child: periodHeader,
-            // ),
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -481,8 +482,7 @@ class _TrendIndicator extends StatelessWidget {
     required this.value,
     required this.indicatorColor,
     this.rangeConditions = const [],
-  })  : assert(value >= -1.0 && value <= 1.0),
-        assert(rangeConditions.isEmpty || rangeConditions.length == 2);
+  }) : assert(rangeConditions.isEmpty || rangeConditions.length == 2);
 
   /// [value] draws the amount/trend in percentage.
   /// It only accepts double range from -1 to 1.

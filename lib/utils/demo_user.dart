@@ -30,12 +30,11 @@ List<SleepRecord> createRecords(DateTime start, DateTime end, [SleepPlan? plan])
   final now = DateTime.now();
   end = end.isAfter(now) ? now : end;
   assert(start.isBefore(end), 'start $start must be before end $end.');
-  AppLogger.I.i('Creating records from $start to $end');
+
   final List<SleepRecord> res = [];
   // Set a default planning
   plan ??= plans[1];
   while (!start.isAfter(end)) {
-    AppLogger.I.i("Creating at $start with results ${res.length}");
     final next = start.add(const Duration(days: 1));
 
     // For showing null data someday.
@@ -49,7 +48,7 @@ List<SleepRecord> createRecords(DateTime start, DateTime end, [SleepPlan? plan])
     final List<SleepRecord> dayRes = [];
 
     for (int i = 0; i < plan.sleepMinutes.length; i++) {
-      int minutes = math.Random().nextInt(24 * 60 - 1) * i;
+      int minutes = math.Random().nextInt(24 * 60 - 1);
       // add minutes based on plan.sleepMinutes
       DateTime timestamp = DateUtils.dateOnly(start).add(Duration(minutes: minutes));
       if (dayRes.isNotEmpty) {
@@ -66,21 +65,19 @@ List<SleepRecord> createRecords(DateTime start, DateTime end, [SleepPlan? plan])
       final int actualMinutes = (sleepMinutes * ((math.Random().nextInt(100) + 50) / 100)).toInt();
       final wakeUpAt = timestamp.add(Duration(minutes: actualMinutes));
 
+      AppLogger.I.i('Creating records from $timestamp to $wakeUpAt with duration ${wakeUpAt.difference(timestamp)}');
+
       final List<SleepEvent> logs = [];
       double sleepIndex = sleepIndex0;
 
       // Ideally, the backgroundFetch stores 30 seconds accelerometer's data per 15 minutes.
-      for (DateTime epoch = timestamp; !epoch.isAfter(wakeUpAt); epoch.add(const Duration(minutes: 15))) {
+      for (DateTime epoch = timestamp; epoch.isBefore(wakeUpAt); epoch = epoch.add(const Duration(minutes: 15))) {
         for (int second = 0; second < 30; second++) {
-          bool isAwaken = math.Random().nextDouble() > 0.3;
-          double meanMagnitudeWithinSecond = math.Random().nextDouble() * (isAwaken ? sleepIndex0 : 1);
+          double meanMagnitudeWithinSecond =
+              math.Random().nextDouble() * math.pow(10, math.Random().nextDouble() >= 0.2 ? -4 : -1);
           sleepIndex = sleepIndexFormula(sleepIndex, meanMagnitudeWithinSecond);
-          logs.add(
-            SleepEvent(
-              intensity: sleepIndex,
-              time: epoch.add(Duration(seconds: second)),
-            ),
-          );
+          final time = epoch.add(Duration(seconds: i));
+          logs.add(SleepEvent(intensity: sleepIndex, time: time));
         }
       }
 
@@ -94,9 +91,11 @@ List<SleepRecord> createRecords(DateTime start, DateTime end, [SleepPlan? plan])
       );
 
       dayRes.add(record);
-      start = next;
     }
     res.addAll(dayRes);
+
+    start = next;
   }
-  return res;
+
+  return res.reversed.toList();
 }

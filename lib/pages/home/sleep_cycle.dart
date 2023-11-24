@@ -36,8 +36,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
   void initState() {
     super.initState();
     final DateTime now = DateTime.now();
-    final DateTime first = ref.read(authStateProvider).sleepRecords.firstOrNull?.start ?? now;
-    final DateTime last = ref.read(authStateProvider).sleepRecords.lastOrNull?.start ?? now;
+    final DateTime first = ref.read(authStateProvider).sleepRecords.lastOrNull?.start ?? now;
+    final DateTime last = ref.read(authStateProvider).sleepRecords.firstOrNull?.start ?? now;
 
     _firstDate = DateTimeUtils.mostRecentWeekday(first, 0);
     _lastDate = DateTimeUtils.mostNearestWeekday(last, 6);
@@ -61,7 +61,7 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
   void _handleNextWeek() {
     DateTimeRange range = DateTimeUtils.shiftDaysToRange(selectedRange, DateTime.daysPerWeek);
 
-    if (range.end.isAfter(_lastDate)) {
+    if (range.start.isBefore(_firstDate)) {
       return;
     }
     setState(() => selectedRange = range);
@@ -123,18 +123,17 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Point<DateTime, double>> sleepEventType = [];
     final Iterable<SleepRecord> records = getDayRecords(_dayIndex);
-    final sleepEvents = records.expand((record) => record.events);
-    final List<DateTimeRange> slots = records
-        .where((record) => record.wakeUpAt != null)
-        .map((record) => DateTimeRange(start: record.start, end: record.wakeUpAt!))
-        .toList();
-    final DateTime? end = sleepEvents.lastOrNull?.time;
+
+    final DateTime? end = records.lastOrNull?.end;
+    final List<Point<DateTime, double>> sleepEventType = [];
+
     Duration interval = const Duration(minutes: 5);
     if (end != null) {
-      DateTime start = sleepEvents.first.time;
-      if (end.difference(start).inHours > 6) {
+      DateTime start = records.first.start;
+      if (end.difference(start).inHours > 11) {
+        interval = const Duration(hours: 2);
+      } else if (end.difference(start).inHours > 5) {
         interval = const Duration(hours: 1);
       } else if (end.difference(start).inHours > 2) {
         interval = const Duration(minutes: 30);
@@ -144,26 +143,21 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
 
       /// Returns sleep events for every record. Only return event per 30 minutes so that the
       /// line chart is not packed with data.
+      final Iterable<SleepEvent> sleepEvents = records.expand((record) => record.events);
       for (start; true; start = start.add(interval)) {
         if (start.isAfter(end)) break;
-        final next = start.add(interval);
         final events = sleepEvents
             .skipWhile((event) => event.time.isBefore(start))
-            .takeWhile((event) => !event.time.isAfter(next));
+            .takeWhile((event) => !event.time.isAfter(start.add(interval)));
+
         SleepType type =
             sleepEvents.any((event) => !start.isBefore(event.time)) ? SleepType.deepSleep : SleepType.awaken;
         double meanType = type.value.toDouble();
 
-        // Point<DateTime, double>? maxValue;
         if (events.isNotEmpty) {
           meanType = events.map((e) => e.type.value).average;
-          // final intensities = events.map((e) => e.intensity);
-          // final maxIntensity = intensities.max;
-          // final maxLog = events.firstWhereOrNull((event) => event.intensity == maxIntensity);
-          // if (maxLog != null) maxValue = Point(maxLog.time, maxLog.type.value.toDouble());
         }
         sleepEventType.add(Point(start, meanType));
-        // if (maxValue != null) sleepEventType.add(maxValue);
       }
     }
 
@@ -172,27 +166,32 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
     double awakenMinutes = 0.0;
     double deepSleepMinutes = 0.0;
 
-    for (int i = 0; i < sleepEvents.length - 1; i++) {
-      final log = sleepEvents.elementAt(i);
-      final nextLog = sleepEvents.elementAt(i + 1);
-      final time = nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
-      // According to our sleep-wake classification algorithm, type is divided into
-      // SleepType.awaken and SleepType.deepSleep;
-      if (log.type == SleepType.awaken) {
-        awakenMinutes += time;
-      } else if (log.type == SleepType.deepSleep) {
-        deepSleepMinutes += time;
+    for (final record in records) {
+      final List<SleepEvent> sleepEvents = record.events;
+      for (int i = 0; i < sleepEvents.length - 1; i++) {
+        final log = sleepEvents[i];
+        final nextLog = sleepEvents[i + 1];
+        final time = nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
+        // According to our sleep-wake classification algorithm, type is divided into
+        // SleepType.awaken and SleepType.deepSleep;
+        if (log.type == SleepType.awaken) {
+          awakenMinutes += time;
+        } else if (log.type == SleepType.deepSleep) {
+          deepSleepMinutes += time;
+        }
       }
-    }
 
-    if (sleepEvents.isNotEmpty) {
-      final last = sleepEvents.last;
-      final time = (records.last.wakeUpAt!.difference(last.time).inMilliseconds).abs() / (60 * 1000);
-      if (last.type == SleepType.deepSleep) {
-        deepSleepMinutes += time;
+      if (sleepEvents.isNotEmpty) {
+        final last = sleepEvents.last;
+        final time = ((record.wakeUpAt ?? record.end).difference(last.time).inMilliseconds).abs() / (60 * 1000);
+        if (last.type == SleepType.deepSleep) {
+          deepSleepMinutes += time;
+        }
       }
     }
-    double minutesInBed = slots.fold(0.0, (previousValue, slot) => previousValue + slot.duration.inMinutes);
+    double minutesInBed = records
+        .where((record) => record.wakeUpAt != null)
+        .fold(0.0, (previousValue, record) => previousValue + record.wakeUpAt!.difference(record.start).inMinutes);
 
     double sleepMinutes = minutesInBed - awakenMinutes - deepSleepMinutes;
     double asleepMinutes = minutesInBed - awakenMinutes;
@@ -329,7 +328,7 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Style.grey3),
                       ),
                       Text(
-                        '${asleepMinutes ~/ 60}hr ${asleepMinutes.remainder(60).toInt()}min asleep',
+                        NumFormat.toPercentWithTotal(asleepMinutes, minutesInBed),
                       ),
                     ],
                   ),

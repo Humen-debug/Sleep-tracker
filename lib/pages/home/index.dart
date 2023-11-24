@@ -542,15 +542,16 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
   @override
   Widget build(BuildContext context) {
     final Iterable<SleepRecord> records = getDayRecords(_dayIndex);
-    final Iterable<SleepEvent> sleepEvents = records.expand((record) => record.events);
 
-    final DateTime? end = sleepEvents.lastOrNull?.time;
+    final DateTime? end = records.lastOrNull?.end;
     final List<Point<DateTime, double>> sleepEventType = [];
 
     Duration interval = const Duration(minutes: 5);
     if (end != null) {
-      DateTime start = sleepEvents.first.time;
-      if (end.difference(start).inHours > 6) {
+      DateTime start = records.first.start;
+      if (end.difference(start).inHours > 11) {
+        interval = const Duration(hours: 2);
+      } else if (end.difference(start).inHours > 5) {
         interval = const Duration(hours: 1);
       } else if (end.difference(start).inHours > 2) {
         interval = const Duration(minutes: 30);
@@ -560,7 +561,7 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
 
       /// Returns sleep events for every record. Only return event per 30 minutes so that the
       /// line chart is not packed with data.
-
+      final Iterable<SleepEvent> sleepEvents = records.expand((record) => record.events);
       for (start; true; start = start.add(interval)) {
         if (start.isAfter(end)) break;
         final events = sleepEvents
@@ -570,16 +571,11 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
         SleepType type =
             sleepEvents.any((event) => !start.isBefore(event.time)) ? SleepType.deepSleep : SleepType.awaken;
         double meanType = type.value.toDouble();
-        // Point<DateTime, double>? maxValue;
+
         if (events.isNotEmpty) {
           meanType = events.map((e) => e.type.value).average;
-          // final intensities = events.map((e) => e.intensity);
-          // final maxIntensity = intensities.max;
-          // final maxLog = events.firstWhereOrNull((event) => event.intensity == maxIntensity);
-          // if (maxLog != null) maxValue = Point(maxLog.time, maxLog.type.value.toDouble());
         }
         sleepEventType.add(Point(start, meanType));
-        // if (maxValue != null) sleepEventType.add(maxValue);
       }
     }
 
@@ -588,26 +584,27 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
     double awakenMinutes = 0.0;
     double deepSleepMinutes = 0.0;
 
-    for (int i = 0; i < sleepEvents.length - 1; i++) {
-      final log = sleepEvents.elementAt(i);
-      final nextLog = sleepEvents.elementAt(i + 1);
-      final time = nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
-      // According to our sleep-wake classification algorithm, type is divided into
-      // SleepType.awaken and SleepType.deepSleep;
-      if (log.type == SleepType.awaken) {
-        awakenMinutes += time;
-      } else if (log.type == SleepType.deepSleep) {
-        deepSleepMinutes += time;
+    for (final record in records) {
+      final List<SleepEvent> sleepEvents = record.events;
+      for (int i = 0; i < sleepEvents.length - 1; i++) {
+        final log = sleepEvents[i];
+        final nextLog = sleepEvents[i + 1];
+        final time = nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
+        // According to our sleep-wake classification algorithm, type is divided into
+        // SleepType.awaken and SleepType.deepSleep;
+        if (log.type == SleepType.awaken) {
+          awakenMinutes += time;
+        } else if (log.type == SleepType.deepSleep) {
+          deepSleepMinutes += time;
+        }
       }
-    }
 
-    if (sleepEvents.isNotEmpty && records.last.wakeUpAt != null) {
-      final last = sleepEvents.last;
-      final time = (records.last.wakeUpAt!.difference(last.time).inMilliseconds).abs() / (60 * 1000);
-      if (last.type == SleepType.deepSleep) {
-        deepSleepMinutes += time;
-      } else if (last.type == SleepType.awaken) {
-        awakenMinutes += time;
+      if (sleepEvents.isNotEmpty) {
+        final last = sleepEvents.last;
+        final time = ((record.wakeUpAt ?? record.end).difference(last.time).inMilliseconds).abs() / (60 * 1000);
+        if (last.type == SleepType.deepSleep) {
+          deepSleepMinutes += time;
+        }
       }
     }
     double minutesInBed = records

@@ -227,7 +227,9 @@ class _RangeIndicatorPainter extends CustomPainter {
     paintImage(canvas: canvas, rect: rect, image: image, filterQuality: FilterQuality.high, fit: BoxFit.contain);
   }
 
-  double _percent(double value) => (value - min) / (max - min);
+  double _percent(double value) {
+    return (value - min) / (max - min);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {

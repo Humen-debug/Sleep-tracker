@@ -254,9 +254,9 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
           }
         }
 
-        if (sleepEvents.isNotEmpty && sleepRecords.last.wakeUpAt != null) {
+        if (sleepEvents.isNotEmpty && record.wakeUpAt != null) {
           final last = sleepEvents.last;
-          final time = (sleepRecords.last.wakeUpAt!.difference(last.time).inMilliseconds).abs() / (60 * 1000);
+          final time = (record.wakeUpAt!.difference(last.time).inMilliseconds).abs() / (60 * 1000);
           if (last.type == SleepType.awaken) {
             awakenMinutes += time;
           }
@@ -337,7 +337,7 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
             showDots: true,
             minX: selectedRange.start.millisecondsSinceEpoch.toDouble(),
             maxX: selectedRange.end.millisecondsSinceEpoch.toDouble(),
-            minY: 0.0,
+            // minY: 0.0,
             intervalX: interval * (24.0 * 3600 * 1000),
           )),
       _buildChart(context,
