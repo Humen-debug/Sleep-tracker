@@ -1,36 +1,41 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sleep_tracker/components/drop_down_button_form_input.dart';
 import 'package:sleep_tracker/components/text_form_input.dart';
+import 'package:sleep_tracker/models/user.dart';
+import 'package:sleep_tracker/providers/auth_provider.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/style.dart';
 import 'package:sleep_tracker/utils/input_rules.dart' as rules;
 
 @RoutePage()
-class ProfilePage extends StatefulWidget {
+class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends ConsumerState<ProfilePage> {
   final GlobalKey<FormState> _formKey = GlobalKey();
   bool _isInputValid = true;
-  late final TextEditingController _nameController = TextEditingController();
-  late final TextEditingController _emailController = TextEditingController();
-  DateTime? _birthday;
-  late final TextEditingController _birthdayController =
-      TextEditingController(text: _birthday == null ? null : DateFormat("yyyy-MM-dd").format(_birthday!));
+  late User user;
+  late final TextEditingController _nameController;
+  late final TextEditingController _emailController;
 
-  void _handleOnSaved() {
-    bool valid = _formKey.currentState?.validate() ?? false;
-    if (_isInputValid != valid) setState(() => _isInputValid = valid);
-    if (_isInputValid) {
-      context.popRoute();
-    }
+  late final TextEditingController _birthdayController;
+
+  @override
+  void initState() {
+    super.initState();
+    user = ref.read(authStateProvider).user!;
+    _nameController = TextEditingController(text: user.name);
+    _emailController = TextEditingController(text: user.email);
+    _birthdayController =
+        TextEditingController(text: user.birth == null ? null : DateFormat("yyyy-MM-dd").format(user.birth!));
   }
 
   @override
@@ -39,6 +44,15 @@ class _ProfilePageState extends State<ProfilePage> {
     _emailController.dispose();
     _birthdayController.dispose();
     super.dispose();
+  }
+
+  void _handleOnSaved() async {
+    bool valid = _formKey.currentState?.validate() ?? false;
+    if (_isInputValid != valid) setState(() => _isInputValid = valid);
+    if (_isInputValid) {
+      await ref.read(authStateProvider.notifier).setUser(user);
+      if (mounted) context.popRoute();
+    }
   }
 
   @override
@@ -119,34 +133,41 @@ class _ProfilePageState extends State<ProfilePage> {
                           initialDate: DateTime.now(),
                           firstDate: DateTime(DateTime.now().year - 100),
                           lastDate: DateTime.now());
-                      if (!DateUtils.isSameDay(date, _birthday)) {
+                      if (!DateUtils.isSameDay(date, user.birth)) {
                         setState(() {
-                          _birthday = date;
-                          _birthdayController.text = DateFormat("yyyy-MM-dd").format(_birthday!);
+                          user = user.copyWith(birth: date);
+                          _birthdayController.text = DateFormat("yyyy-MM-dd").format(user.birth!);
                         });
                       }
                     },
                   ),
                   DropdownButtonFormInput(
-                      value: 'Male',
-                      label: 'Gender',
-                      leading: SvgPicture.asset('assets/icons/person.svg',
-                          color: Theme.of(context).colorScheme.primary, width: 16, height: 16),
-                      items: const <DropdownMenuItem<String>>[
-                        DropdownMenuItem(
-                          value: 'Male',
-                          child: Text('Male'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Female',
-                          child: Text('Female'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Other',
-                          child: Text('Other'),
-                        ),
-                      ],
-                      onChanged: (v) {}),
+                    value: user.gender,
+                    label: 'Gender',
+                    leading: SvgPicture.asset('assets/icons/person.svg',
+                        color: Theme.of(context).colorScheme.primary, width: 16, height: 16),
+                    items: const <DropdownMenuItem<String>>[
+                      DropdownMenuItem(
+                        value: 'male',
+                        child: Text('Male'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'female',
+                        child: Text('Female'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'other',
+                        child: Text('Other'),
+                      ),
+                    ],
+                    onChanged: (v) {
+                      if (v != user.gender) {
+                        setState(() {
+                          user = user.copyWith(gender: v);
+                        });
+                      }
+                    },
+                  ),
                 ],
               ),
             ),

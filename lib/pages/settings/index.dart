@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sleep_tracker/providers/auth_provider.dart';
 import 'package:sleep_tracker/routers/app_router.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
@@ -37,6 +38,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authStateProvider);
+    final user = auth.user;
     final Widget divider = Divider(color: Theme.of(context).colorScheme.background, height: 0);
     return Scaffold(
       body: SingleChildScrollView(
@@ -57,9 +60,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text("Your Name", style: TextStyle(fontWeight: FontWeight.w600)),
+                      Text(user!.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: Style.spacingXxs),
-                      Text('user@email.com', style: Theme.of(context).textTheme.labelSmall)
+                      Text(user.email, style: Theme.of(context).textTheme.labelSmall)
                     ],
                   )),
                   const SizedBox(width: Style.spacingSm),

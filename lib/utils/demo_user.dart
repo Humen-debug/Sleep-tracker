@@ -65,8 +65,6 @@ List<SleepRecord> createRecords(DateTime start, DateTime end, [SleepPlan? plan])
       final int actualMinutes = (sleepMinutes * ((math.Random().nextInt(100) + 50) / 100)).toInt();
       final wakeUpAt = timestamp.add(Duration(minutes: actualMinutes));
 
-      AppLogger.I.i('Creating records from $timestamp to $wakeUpAt with duration ${wakeUpAt.difference(timestamp)}');
-
       final List<SleepEvent> logs = [];
       double sleepIndex = sleepIndex0;
 
@@ -96,6 +94,6 @@ List<SleepRecord> createRecords(DateTime start, DateTime end, [SleepPlan? plan])
 
     start = next;
   }
-
+  AppLogger.I.i('Created ${res.length} records');
   return res.reversed.toList();
 }
