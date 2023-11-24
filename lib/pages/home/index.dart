@@ -78,7 +78,13 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _setBedtime() async {
-    final DateTimeRange? range = await context.pushRoute<DateTimeRange?>(const EnterBedtimeRoute());
+    final SleepStatus sleepStatus = ref.read(authStateProvider).sleepStatus;
+    DateTimeRange? initialRange;
+    if (sleepStatus != SleepStatus.awaken) {
+      final last = ref.read(authStateProvider).sleepRecords.first;
+      initialRange = DateTimeRange(start: last.start, end: last.end);
+    }
+    final DateTimeRange? range = await context.pushRoute<DateTimeRange?>(EnterBedtimeRoute(initialRange: initialRange));
     if (range == null) return;
 
     final DateTime now = DateTime.now();
@@ -93,7 +99,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     final DateTime? nextStart = isBeforeNow ? null : range.start;
     final DateTime? nextEnd = isBeforeNow ? null : range.end;
 
-    final SleepStatus sleepStatus = ref.read(authStateProvider).sleepStatus;
     try {
       if (sleepStatus != SleepStatus.awaken) {
         // Edit the latest sleep record, if the user hasn't slept yet or is sleeping.

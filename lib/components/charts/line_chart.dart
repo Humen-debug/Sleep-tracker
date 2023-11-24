@@ -21,7 +21,7 @@ class LineChart<T extends Object?, K extends num?> extends StatelessWidget {
     this.getTooltipLabels,
     this.getSpot,
     this.showDots = false,
-    this.yTitleWidth = 44.0,
+    this.yTitleWidth = 46.0,
     this.minX,
     this.maxX,
     this.baselineX,

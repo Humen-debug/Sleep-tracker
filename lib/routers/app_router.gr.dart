@@ -28,9 +28,14 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
     EnterBedtimeRoute.name: (routeData) {
+      final args = routeData.argsAs<EnterBedtimeRouteArgs>(
+          orElse: () => const EnterBedtimeRouteArgs());
       return AutoRoutePage<DateTimeRange>(
         routeData: routeData,
-        child: const EnterBedtimePage(),
+        child: EnterBedtimePage(
+          key: args.key,
+          initialRange: args.initialRange,
+        ),
       );
     },
     EnterFeelingRoute.name: (routeData) {
@@ -138,16 +143,40 @@ class ChangePasswordRoute extends PageRouteInfo<void> {
 
 /// generated route for
 /// [EnterBedtimePage]
-class EnterBedtimeRoute extends PageRouteInfo<void> {
-  const EnterBedtimeRoute({List<PageRouteInfo>? children})
-      : super(
+class EnterBedtimeRoute extends PageRouteInfo<EnterBedtimeRouteArgs> {
+  EnterBedtimeRoute({
+    Key? key,
+    DateTimeRange? initialRange,
+    List<PageRouteInfo>? children,
+  }) : super(
           EnterBedtimeRoute.name,
+          args: EnterBedtimeRouteArgs(
+            key: key,
+            initialRange: initialRange,
+          ),
           initialChildren: children,
         );
 
   static const String name = 'EnterBedtimeRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static const PageInfo<EnterBedtimeRouteArgs> page =
+      PageInfo<EnterBedtimeRouteArgs>(name);
+}
+
+class EnterBedtimeRouteArgs {
+  const EnterBedtimeRouteArgs({
+    this.key,
+    this.initialRange,
+  });
+
+  final Key? key;
+
+  final DateTimeRange? initialRange;
+
+  @override
+  String toString() {
+    return 'EnterBedtimeRouteArgs{key: $key, initialRange: $initialRange}';
+  }
 }
 
 /// generated route for

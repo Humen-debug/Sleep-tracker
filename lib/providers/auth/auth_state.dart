@@ -25,6 +25,7 @@ class AuthState with _$AuthState implements PersistentState<AuthState> {
   SleepStatus get sleepStatus {
     if (sleepRecords.isEmpty) return SleepStatus.awaken;
     final SleepRecord latest = sleepRecords.first;
+
     final DateTime now = DateTime.now();
     // If the latest sleep record hasn't started yet.
     if (latest.start.isAfter(now)) {

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:auto_route/auto_route.dart';
@@ -54,8 +55,10 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
   Widget _buildItems(BuildContext context, int index) {
     final ThemeData themeData = Theme.of(context);
     final DateTime date = DateTime.now().subtract(Duration(days: index));
-    final Iterable<SleepRecord> records =
-        ref.watch(daySleepRecordsProvider(date)).where((record) => record.wakeUpAt != null);
+    final Iterable<SleepRecord> records = ref
+        .watch(daySleepRecordsProvider(date))
+        .where((record) => record.wakeUpAt != null)
+        .sorted((a, b) => a.start.isBefore(b.start) ? -1 : 0);
     if (records.isEmpty) return const SizedBox.shrink();
 
     final moods = records.map((record) => record.sleepQuality).whereNotNull();
@@ -162,14 +165,10 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
               ]
             ],
           ),
-          // dev
           Padding(
             padding: const EdgeInsets.symmetric(vertical: Style.spacingLg),
             child: _TimeSlotChart(
-              range: DateTimeRange(
-                start: (records.first.start),
-                end: (records.last.wakeUpAt ?? records.last.end),
-              ),
+              range: DateTimeRange(start: slots.first.start, end: slots.last.end),
               slots: slots,
             ),
           ),
@@ -200,9 +199,10 @@ class _SleepDiaryPageState extends ConsumerState<SleepDiaryPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Sleep Diary')),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: kBottomNavigationBarHeight),
+        padding: EdgeInsets.only(
+            bottom: kBottomNavigationBarHeight + (Platform.isIOS ? MediaQuery.paddingOf(context).bottom / 3 : 0)),
         child: AnimatedSlide(
-          offset: _showFab ? Offset.zero : const Offset(0, 2),
+          offset: _showFab ? Offset.zero : const Offset(0, 4),
           duration: _fabAnimationDuration,
           child: FloatingActionButton(
             onPressed: () {

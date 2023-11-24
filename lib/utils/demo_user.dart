@@ -71,8 +71,12 @@ List<SleepRecord> createRecords(DateTime start, DateTime end, [SleepPlan? plan])
       // Ideally, the backgroundFetch stores 30 seconds accelerometer's data per 15 minutes.
       for (DateTime epoch = timestamp; epoch.isBefore(wakeUpAt); epoch = epoch.add(const Duration(minutes: 15))) {
         for (int second = 0; second < 30; second++) {
-          double meanMagnitudeWithinSecond =
-              math.Random().nextDouble() * math.pow(10, math.Random().nextDouble() >= 0.2 ? -4 : -1);
+          final isAwake = math.Random().nextDouble() < 0.2;
+          double meanMagnitudeWithinSecond = math.Random().nextDouble() *
+              math.pow(
+                10,
+                (isAwake ? -1 : ((math.Random().nextInt(9) + 3) / 10) * -6),
+              );
           sleepIndex = sleepIndexFormula(sleepIndex, meanMagnitudeWithinSecond);
           final time = epoch.add(Duration(seconds: i));
           logs.add(SleepEvent(intensity: sleepIndex, time: time));

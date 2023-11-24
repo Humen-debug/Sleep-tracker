@@ -1,19 +1,28 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sleep_tracker/components/bedtime_input/index.dart';
+import 'package:sleep_tracker/models/sleep_plan.dart';
+import 'package:sleep_tracker/models/user.dart';
+import 'package:sleep_tracker/providers/auth_provider.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
 @RoutePage<DateTimeRange>()
-class EnterBedtimePage extends StatefulWidget {
-  const EnterBedtimePage({super.key});
+class EnterBedtimePage extends ConsumerStatefulWidget {
+  const EnterBedtimePage({
+    super.key,
+    this.initialRange,
+  });
+  final DateTimeRange? initialRange;
 
   @override
-  State<EnterBedtimePage> createState() => _EnterBedtimePageState();
+  ConsumerState<EnterBedtimePage> createState() => _EnterBedtimePageState();
 }
 
-class _EnterBedtimePageState extends State<EnterBedtimePage> {
+class _EnterBedtimePageState extends ConsumerState<EnterBedtimePage> {
   late DateTimeRange _selectedRange;
   // dev
   bool _alarmOn = true;
@@ -21,9 +30,15 @@ class _EnterBedtimePageState extends State<EnterBedtimePage> {
   @override
   void initState() {
     super.initState();
+    final User? user = ref.read(authStateProvider).user;
+    final SleepPlan? plan = plans.firstWhereOrNull((plan) => plan.id == user?.sleepPlan);
     final DateTime now = DateTime.now();
-    // todo: add personalization or plan recommendation
-    _selectedRange = DateTimeRange(start: now, end: now.add(const Duration(hours: 8)));
+
+    _selectedRange = widget.initialRange ??
+        DateTimeRange(
+          start: now,
+          end: now.add(Duration(minutes: plan?.sleepMinutes.firstOrNull?.toInt() ?? 480)),
+        );
   }
 
   void _handleCancel() {

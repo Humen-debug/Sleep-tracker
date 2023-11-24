@@ -400,7 +400,7 @@ class _StatisticPageState extends ConsumerState<StatisticPage> {
           preferredSize: const Size.fromHeight(_appBarHeight),
           child: AppBar(
             automaticallyImplyLeading: false,
-            backgroundColor: Theme.of(context).colorScheme.background.withOpacity(0.75),
+            backgroundColor: Colors.transparent,
             elevation: 0,
             flexibleSpace: Padding(
                 padding: const EdgeInsets.all(Style.spacingMd),
