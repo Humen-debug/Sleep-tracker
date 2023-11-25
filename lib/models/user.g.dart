@@ -16,7 +16,6 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
           : DateTime.parse(json['birth'] as String),
       gender: json['gender'] as String?,
       sleepPlan: json['sleepPlan'] as String?,
-      sleepPlanDays: json['sleepPlanDays'] as int? ?? 0,
       sleepPlanUpdatedAt: json['sleepPlanUpdatedAt'] == null
           ? null
           : DateTime.parse(json['sleepPlanUpdatedAt'] as String),
@@ -31,6 +30,5 @@ Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
       'birth': instance.birth?.toIso8601String(),
       'gender': instance.gender,
       'sleepPlan': instance.sleepPlan,
-      'sleepPlanDays': instance.sleepPlanDays,
       'sleepPlanUpdatedAt': instance.sleepPlanUpdatedAt?.toIso8601String(),
     };

@@ -16,15 +16,16 @@ class User with _$User {
     ///  [sleepPlan] stores the id of SleepPlan that user is adapting
     String? sleepPlan,
 
-    /// [sleepPlanDays] stores the days that user have adapted the [sleepPlan]
-    @Default(0) int sleepPlanDays,
-
     /// [sleepPlanUpdatedAt]  stores the day/time when user adapts the [sleepPlan]
     ///
     /// It is used to calculate the plan fulfillment and sleep quality during the plan
     /// period in PlanPage.
     DateTime? sleepPlanUpdatedAt,
   }) = _User;
+  const User._();
+
+  /// [sleepPlanDays] returns the amount of days that user has adapted the [sleepPlan]
+  int get sleepPlanDays => sleepPlanUpdatedAt != null ? DateTime.now().difference(sleepPlanUpdatedAt!).inDays : 0;
 
   factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 }

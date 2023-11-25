@@ -9,7 +9,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sleep_tracker/components/moods/utils.dart';
 import 'package:sleep_tracker/components/sleep_phase_block.dart';
-// import 'package:sleep_tracker/logger/logger.dart';
 import 'package:sleep_tracker/models/sleep_record.dart';
 import 'package:sleep_tracker/providers/sleep_records_provider.dart';
 import 'package:sleep_tracker/utils/num.dart';

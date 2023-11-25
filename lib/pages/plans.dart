@@ -4,19 +4,26 @@ import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:sleep_tracker/components/moods/utils.dart';
 import 'package:sleep_tracker/components/sleep_plan_pie_chart.dart';
 import 'package:sleep_tracker/models/sleep_plan.dart';
+import 'package:sleep_tracker/models/user.dart';
+import 'package:sleep_tracker/providers/auth_provider.dart';
+import 'package:sleep_tracker/providers/sleep_records_provider.dart';
+import 'package:sleep_tracker/utils/num.dart';
+import 'package:sleep_tracker/utils/string.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
 @RoutePage()
-class PlansPage extends StatefulWidget {
+class PlansPage extends ConsumerStatefulWidget {
   const PlansPage({super.key});
 
   @override
-  State<PlansPage> createState() => _PlansPageState();
+  ConsumerState<PlansPage> createState() => _PlansPageState();
 }
 
-class _PlansPageState extends State<PlansPage> {
+class _PlansPageState extends ConsumerState<PlansPage> {
   late final List<List<Sector>> _sleepSectors = plans.map((plan) {
     final List<Sector> res = [];
     const int dayMinutes = 24 * 60;
@@ -66,10 +73,47 @@ Once you confirm, your plan record will be reset.''', style: const TextStyle(fon
             ),
           );
         });
-    if (confirm == true) setState(() => _activeIndex = index);
+    if (confirm == true) {
+      setState(() => _activeIndex = index);
+      SleepPlan plan = plans[_activeIndex];
+      User? user = ref.read(authStateProvider).user?.copyWith(sleepPlan: plan.id, sleepPlanUpdatedAt: DateTime.now());
+      ref.read(authStateProvider.notifier).setUser(user);
+    }
   }
 
   List<Widget> _buildHeader(BuildContext context, bool innerBoxIsScrolled) {
+    User? user = ref.watch(authStateProvider).user;
+    // Calculated by total sleep duration and the match of sleep time slots per day.
+    final DateTime? planStartedAt = user?.sleepPlanUpdatedAt;
+    final DateTime now = DateUtils.dateOnly(DateTime.now());
+    final bool planStartsToday = planStartedAt == null || DateUtils.isSameDay(now, planStartedAt);
+    final SleepPlan plan = plans.firstWhereOrNull((plan) => plan.id == user?.sleepPlan) ?? plans[0];
+    double fulfillment = 0.0;
+    double meanMood = 0.0;
+    int moodCount = 0;
+    int count = 0;
+    if (!planStartsToday) {
+      for (DateTime start = DateUtils.dateOnly(planStartedAt);
+          !start.isAfter(DateTime.now());
+          start = DateUtils.addDaysToDate(start, 1)) {
+        final records = ref.watch(daySleepRecordsProvider(start)).where((record) => record.wakeUpAt != null);
+        if (records.isNotEmpty) count++;
+
+        double minutesInBed = 0.0;
+
+        for (final record in records) {
+          minutesInBed += (record.wakeUpAt!.difference(record.start).inMinutes);
+          final mood = record.sleepQuality;
+          if (mood != null) {
+            moodCount++;
+            meanMood = (meanMood * (moodCount - 1) + mood) / moodCount;
+          }
+        }
+
+        double value = math.max(math.min(minutesInBed / plan.sleepMinutes.sum, 1), 0);
+        fulfillment = (fulfillment * (count - 1) + value) / count;
+      }
+    }
     return <Widget>[
       SliverToBoxAdapter(
         child: Column(
@@ -90,7 +134,8 @@ Once you confirm, your plan record will be reset.''', style: const TextStyle(fon
                     Text('Plan adopted for',
                         style: Theme.of(context).textTheme.labelSmall, textAlign: TextAlign.center),
                     const SizedBox(height: Style.spacingXxs),
-                    Text('10 days', style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center)
+                    Text('${user?.sleepPlanDays ?? '-'} days',
+                        style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center)
                   ],
                 ),
                 Column(
@@ -99,7 +144,8 @@ Once you confirm, your plan record will be reset.''', style: const TextStyle(fon
                     Text('Plan fulfillment',
                         style: Theme.of(context).textTheme.labelSmall, textAlign: TextAlign.center),
                     const SizedBox(height: Style.spacingXxs),
-                    Text('82%', style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center)
+                    Text(!planStartsToday ? NumFormat.toPercent(fulfillment) : '--',
+                        style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center)
                   ],
                 ),
                 Column(
@@ -107,7 +153,8 @@ Once you confirm, your plan record will be reset.''', style: const TextStyle(fon
                   children: [
                     Text('Sleep quality', style: Theme.of(context).textTheme.labelSmall, textAlign: TextAlign.center),
                     const SizedBox(height: Style.spacingXxs),
-                    Text('Good', style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center)
+                    Text(!planStartsToday ? (valueToMood(meanMood).name).capitalize() : '--',
+                        style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center)
                   ],
                 ),
               ],

@@ -20,7 +20,6 @@ User createUser() {
     email: 'jennifer@email.com',
     password: '12345678',
     sleepPlan: '1',
-    sleepPlanDays: sleepPlanDays,
     sleepPlanUpdatedAt: DateTime.now().subtract(const Duration(days: sleepPlanDays)),
   );
 }

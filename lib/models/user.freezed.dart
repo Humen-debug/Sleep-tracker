@@ -30,9 +30,6 @@ mixin _$User {
   ///  [sleepPlan] stores the id of SleepPlan that user is adapting
   String? get sleepPlan => throw _privateConstructorUsedError;
 
-  /// [sleepPlanDays] stores the days that user have adapted the [sleepPlan]
-  int get sleepPlanDays => throw _privateConstructorUsedError;
-
   /// [sleepPlanUpdatedAt]  stores the day/time when user adapts the [sleepPlan]
   ///
   /// It is used to calculate the plan fulfillment and sleep quality during the plan
@@ -57,7 +54,6 @@ abstract class $UserCopyWith<$Res> {
       DateTime? birth,
       String? gender,
       String? sleepPlan,
-      int sleepPlanDays,
       DateTime? sleepPlanUpdatedAt});
 }
 
@@ -81,7 +77,6 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? birth = freezed,
     Object? gender = freezed,
     Object? sleepPlan = freezed,
-    Object? sleepPlanDays = null,
     Object? sleepPlanUpdatedAt = freezed,
   }) {
     return _then(_value.copyWith(
@@ -113,10 +108,6 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
           ? _value.sleepPlan
           : sleepPlan // ignore: cast_nullable_to_non_nullable
               as String?,
-      sleepPlanDays: null == sleepPlanDays
-          ? _value.sleepPlanDays
-          : sleepPlanDays // ignore: cast_nullable_to_non_nullable
-              as int,
       sleepPlanUpdatedAt: freezed == sleepPlanUpdatedAt
           ? _value.sleepPlanUpdatedAt
           : sleepPlanUpdatedAt // ignore: cast_nullable_to_non_nullable
@@ -140,7 +131,6 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
       DateTime? birth,
       String? gender,
       String? sleepPlan,
-      int sleepPlanDays,
       DateTime? sleepPlanUpdatedAt});
 }
 
@@ -161,7 +151,6 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? birth = freezed,
     Object? gender = freezed,
     Object? sleepPlan = freezed,
-    Object? sleepPlanDays = null,
     Object? sleepPlanUpdatedAt = freezed,
   }) {
     return _then(_$UserImpl(
@@ -193,10 +182,6 @@ class __$$UserImplCopyWithImpl<$Res>
           ? _value.sleepPlan
           : sleepPlan // ignore: cast_nullable_to_non_nullable
               as String?,
-      sleepPlanDays: null == sleepPlanDays
-          ? _value.sleepPlanDays
-          : sleepPlanDays // ignore: cast_nullable_to_non_nullable
-              as int,
       sleepPlanUpdatedAt: freezed == sleepPlanUpdatedAt
           ? _value.sleepPlanUpdatedAt
           : sleepPlanUpdatedAt // ignore: cast_nullable_to_non_nullable
@@ -207,7 +192,7 @@ class __$$UserImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$UserImpl implements _User {
+class _$UserImpl extends _User {
   const _$UserImpl(
       {required this.id,
       required this.name,
@@ -216,8 +201,8 @@ class _$UserImpl implements _User {
       this.birth,
       this.gender,
       this.sleepPlan,
-      this.sleepPlanDays = 0,
-      this.sleepPlanUpdatedAt});
+      this.sleepPlanUpdatedAt})
+      : super._();
 
   factory _$UserImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserImplFromJson(json);
@@ -239,11 +224,6 @@ class _$UserImpl implements _User {
   @override
   final String? sleepPlan;
 
-  /// [sleepPlanDays] stores the days that user have adapted the [sleepPlan]
-  @override
-  @JsonKey()
-  final int sleepPlanDays;
-
   /// [sleepPlanUpdatedAt]  stores the day/time when user adapts the [sleepPlan]
   ///
   /// It is used to calculate the plan fulfillment and sleep quality during the plan
@@ -253,7 +233,7 @@ class _$UserImpl implements _User {
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, email: $email, password: $password, birth: $birth, gender: $gender, sleepPlan: $sleepPlan, sleepPlanDays: $sleepPlanDays, sleepPlanUpdatedAt: $sleepPlanUpdatedAt)';
+    return 'User(id: $id, name: $name, email: $email, password: $password, birth: $birth, gender: $gender, sleepPlan: $sleepPlan, sleepPlanUpdatedAt: $sleepPlanUpdatedAt)';
   }
 
   @override
@@ -270,8 +250,6 @@ class _$UserImpl implements _User {
             (identical(other.gender, gender) || other.gender == gender) &&
             (identical(other.sleepPlan, sleepPlan) ||
                 other.sleepPlan == sleepPlan) &&
-            (identical(other.sleepPlanDays, sleepPlanDays) ||
-                other.sleepPlanDays == sleepPlanDays) &&
             (identical(other.sleepPlanUpdatedAt, sleepPlanUpdatedAt) ||
                 other.sleepPlanUpdatedAt == sleepPlanUpdatedAt));
   }
@@ -279,7 +257,7 @@ class _$UserImpl implements _User {
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, name, email, password, birth,
-      gender, sleepPlan, sleepPlanDays, sleepPlanUpdatedAt);
+      gender, sleepPlan, sleepPlanUpdatedAt);
 
   @JsonKey(ignore: true)
   @override
@@ -295,7 +273,7 @@ class _$UserImpl implements _User {
   }
 }
 
-abstract class _User implements User {
+abstract class _User extends User {
   const factory _User(
       {required final String id,
       required final String name,
@@ -304,8 +282,8 @@ abstract class _User implements User {
       final DateTime? birth,
       final String? gender,
       final String? sleepPlan,
-      final int sleepPlanDays,
       final DateTime? sleepPlanUpdatedAt}) = _$UserImpl;
+  const _User._() : super._();
 
   factory _User.fromJson(Map<String, dynamic> json) = _$UserImpl.fromJson;
 
@@ -325,10 +303,6 @@ abstract class _User implements User {
 
   ///  [sleepPlan] stores the id of SleepPlan that user is adapting
   String? get sleepPlan;
-  @override
-
-  /// [sleepPlanDays] stores the days that user have adapted the [sleepPlan]
-  int get sleepPlanDays;
   @override
 
   /// [sleepPlanUpdatedAt]  stores the day/time when user adapts the [sleepPlan]
