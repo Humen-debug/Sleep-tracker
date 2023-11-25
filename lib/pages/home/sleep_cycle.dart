@@ -36,13 +36,16 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
   void initState() {
     super.initState();
     final DateTime now = DateTime.now();
-    final DateTime first = ref.read(authStateProvider).sleepRecords.lastOrNull?.start ?? now;
-    final DateTime last = ref.read(authStateProvider).sleepRecords.firstOrNull?.start ?? now;
+    final DateTime first =
+        ref.read(authStateProvider).sleepRecords.lastOrNull?.start ?? now;
+    final DateTime last =
+        ref.read(authStateProvider).sleepRecords.firstOrNull?.start ?? now;
 
     _firstDate = DateTimeUtils.mostRecentWeekday(first, 0);
     _lastDate = DateTimeUtils.mostNearestWeekday(last, 6);
-    selectedRange =
-        DateTimeRange(start: DateTimeUtils.mostRecentWeekday(now, 0), end: DateTimeUtils.mostNearestWeekday(now, 6));
+    selectedRange = DateTimeRange(
+        start: DateTimeUtils.mostRecentWeekday(now, 0),
+        end: DateTimeUtils.mostNearestWeekday(now, 6));
 
     _dayIndex = now.difference(selectedRange.start).inDays;
   }
@@ -51,7 +54,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
   bool get _isDisplayingLastDate => !selectedRange.end.isBefore(_lastDate);
 
   void _handlePreviousWeek() {
-    DateTimeRange range = DateTimeUtils.shiftDaysToRange(selectedRange, -DateTime.daysPerWeek);
+    DateTimeRange range =
+        DateTimeUtils.shiftDaysToRange(selectedRange, -DateTime.daysPerWeek);
     if (range.end.isAfter(_lastDate)) {
       return;
     }
@@ -59,7 +63,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
   }
 
   void _handleNextWeek() {
-    DateTimeRange range = DateTimeUtils.shiftDaysToRange(selectedRange, DateTime.daysPerWeek);
+    DateTimeRange range =
+        DateTimeUtils.shiftDaysToRange(selectedRange, DateTime.daysPerWeek);
 
     if (range.start.isBefore(_firstDate)) {
       return;
@@ -78,7 +83,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
     final Iterable<SleepRecord> dayRecords = getDayRecords(index);
     final DateTime now = DateTime.now();
 
-    final double totalSleepSeconds = dayRecords.fold(0.0, (previousValue, record) {
+    final double totalSleepSeconds =
+        dayRecords.fold(0.0, (previousValue, record) {
       final DateTime? wakeUpAt = record.wakeUpAt;
       final DateTime start = record.start;
       DateTime end = record.end;
@@ -107,10 +113,16 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                 DateFormat.E().format(day).substring(0, 1),
                 style: themeData.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: isSelected ? themeData.colorScheme.onSurface : themeData.colorScheme.secondary),
+                    color: isSelected
+                        ? themeData.colorScheme.onSurface
+                        : themeData.colorScheme.secondary),
               ),
             ),
-            TimerPaint(progress: progress, radius: 16.0, strokeWidth: 8, showIndicator: false),
+            TimerPaint(
+                progress: progress,
+                radius: 16.0,
+                strokeWidth: 8,
+                showIndicator: false),
           ],
         ),
       ),
@@ -143,15 +155,17 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
 
       /// Returns sleep events for every record. Only return event per 30 minutes so that the
       /// line chart is not packed with data.
-      final Iterable<SleepEvent> sleepEvents = records.expand((record) => record.events);
+      final Iterable<SleepEvent> sleepEvents =
+          records.expand((record) => record.events);
       for (start; true; start = start.add(interval)) {
         if (start.isAfter(end)) break;
         final events = sleepEvents
             .skipWhile((event) => event.time.isBefore(start))
             .takeWhile((event) => !event.time.isAfter(start.add(interval)));
 
-        SleepType type =
-            sleepEvents.any((event) => !start.isBefore(event.time)) ? SleepType.deepSleep : SleepType.awaken;
+        SleepType type = sleepEvents.any((event) => !start.isBefore(event.time))
+            ? SleepType.deepSleep
+            : SleepType.awaken;
         double meanType = type.value.toDouble();
 
         if (events.isNotEmpty) {
@@ -171,7 +185,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
       for (int i = 0; i < sleepEvents.length - 1; i++) {
         final log = sleepEvents[i];
         final nextLog = sleepEvents[i + 1];
-        final time = nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
+        final time =
+            nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
         // According to our sleep-wake classification algorithm, type is divided into
         // SleepType.awaken and SleepType.deepSleep;
         if (log.type == SleepType.awaken) {
@@ -183,7 +198,11 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
 
       if (sleepEvents.isNotEmpty) {
         final last = sleepEvents.last;
-        final time = ((record.wakeUpAt ?? record.end).difference(last.time).inMilliseconds).abs() / (60 * 1000);
+        final time = ((record.wakeUpAt ?? record.end)
+                    .difference(last.time)
+                    .inMilliseconds)
+                .abs() /
+            (60 * 1000);
         if (last.type == SleepType.deepSleep) {
           deepSleepMinutes += time;
         }
@@ -191,7 +210,11 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
     }
     double minutesInBed = records
         .where((record) => record.wakeUpAt != null)
-        .fold(0.0, (previousValue, record) => previousValue + record.wakeUpAt!.difference(record.start).inMinutes);
+        .fold(
+            0.0,
+            (previousValue, record) =>
+                previousValue +
+                record.wakeUpAt!.difference(record.start).inMinutes);
 
     double sleepMinutes = minutesInBed - awakenMinutes - deepSleepMinutes;
     double asleepMinutes = minutesInBed - awakenMinutes;
@@ -215,8 +238,10 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
           onDateChanged: (value) {
             if (value != null && value != selectedRange.start) {
               setState(() {
-                selectedRange =
-                    DateTimeRange(start: value, end: value.add(const Duration(days: DateTime.daysPerWeek - 1)));
+                selectedRange = DateTimeRange(
+                    start: value,
+                    end: value
+                        .add(const Duration(days: DateTime.daysPerWeek - 1)));
               });
             }
           },
@@ -244,13 +269,15 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                   (index) => Container(
                         width: 40,
                         alignment: Alignment.center,
-                        child: Text('${_firstDate.day + index}'),
+                        child: Text(
+                            '${selectedRange.start.add(Duration(days: index)).day}'),
                       )),
             ),
             const SizedBox(height: Style.spacingXs),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(DateTime.daysPerWeek, _buildWeekdayButton),
+              children:
+                  List.generate(DateTime.daysPerWeek, _buildWeekdayButton),
             ),
             const SizedBox(height: Style.spacingMd),
             periodPicker,
@@ -259,7 +286,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
               data: sleepEventType,
               getSpot: (x, y) {
                 final int min = earliest?.millisecondsSinceEpoch ?? 0;
-                return Point((x.millisecondsSinceEpoch - min).toDouble(), y.toDouble());
+                return Point(
+                    (x.millisecondsSinceEpoch - min).toDouble(), y.toDouble());
               },
               gradientColors: [
                 Theme.of(context).primaryColor.withOpacity(0.8),
@@ -280,12 +308,16 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
               getXTitles: (value) {
                 // value here is the difference of millisecondSinceEpoch between earliest and data.
                 // Restore and return the millisecondSinceEpoch of data.
-                final int milliSecond = value.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
-                return DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
+                final int milliSecond =
+                    value.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
+                return DateFormat.Hm()
+                    .format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
               },
               getTooltipLabels: (x, y) {
-                final int milliSecond = x.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
-                final String time = DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
+                final int milliSecond =
+                    x.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
+                final String time = DateFormat.Hm()
+                    .format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
                 int index = y.round();
                 if (index >= 9) {
                   return '$time, Awake';
@@ -302,7 +334,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
               intervalX: interval.inMilliseconds.toDouble(),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -313,7 +346,10 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                         (records.isNotEmpty && records.last.wakeUpAt != null)
                             ? '${DateFormat.jm().format(records.first.start)} - ${DateFormat.jm().format(records.last.wakeUpAt!)}'
                             : 'No record found',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Style.grey3),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Style.grey3),
                       ),
                       Text(
                         '${asleepMinutes ~/ 60}hr ${asleepMinutes.remainder(60).toInt()}min asleep',
@@ -325,10 +361,14 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                     children: [
                       Text(
                         'Sleep Efficiency',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Style.grey3),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Style.grey3),
                       ),
                       Text(
-                        NumFormat.toPercentWithTotal(asleepMinutes, minutesInBed),
+                        NumFormat.toPercentWithTotal(
+                            asleepMinutes, minutesInBed),
                       ),
                     ],
                   ),
@@ -351,7 +391,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                           asleepColor: asleepColor,
                           deepSleepColor: deepSleepColor,
                           awakeColor: awakeColor,
-                          backgroundColor: Theme.of(context).colorScheme.tertiary,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.tertiary,
                           awake: awakenMinutes,
                           asleep: sleepMinutes,
                           deepSleep: asleepMinutes,
@@ -365,7 +406,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                             const SizedBox(height: Style.spacingXxs),
                             Text(
                               "${minutesInBed ~/ 60 > 0 ? '${minutesInBed ~/ 60}hr ' : ''}${minutesInBed.remainder(60) > 0 ? '${minutesInBed.remainder(60).toInt()}min' : ''}",
-                              style: dataTextTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                              style: dataTextTheme.bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
                             )
                           ],
                         ),
@@ -382,7 +424,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            decoration: BoxDecoration(shape: BoxShape.circle, color: awakeColor),
+                            decoration: BoxDecoration(
+                                shape: BoxShape.circle, color: awakeColor),
                             width: 8,
                             height: 8,
                             margin: const EdgeInsets.symmetric(vertical: 2),
@@ -392,10 +435,14 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text("Awake",
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w300)),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(fontWeight: FontWeight.w300)),
                               Text(
                                   '${awakenMinutes ~/ 60}hr ${awakenMinutes.remainder(60).toInt()}min (${NumFormat.toPercentWithTotal(awakenMinutes, minutesInBed)})',
-                                  style: dataTextTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))
+                                  style: dataTextTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold))
                             ],
                           ),
                         ],
@@ -405,7 +452,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            decoration: BoxDecoration(shape: BoxShape.circle, color: asleepColor),
+                            decoration: BoxDecoration(
+                                shape: BoxShape.circle, color: asleepColor),
                             width: 8,
                             height: 8,
                             margin: const EdgeInsets.symmetric(vertical: 2),
@@ -415,10 +463,14 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text("Sleep",
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w300)),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(fontWeight: FontWeight.w300)),
                               Text(
                                   '${sleepMinutes ~/ 60}hr ${sleepMinutes.remainder(60).toInt()}min (${NumFormat.toPercentWithTotal(sleepMinutes, minutesInBed)})',
-                                  style: dataTextTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))
+                                  style: dataTextTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold))
                             ],
                           ),
                         ],
@@ -428,7 +480,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            decoration: BoxDecoration(shape: BoxShape.circle, color: deepSleepColor),
+                            decoration: BoxDecoration(
+                                shape: BoxShape.circle, color: deepSleepColor),
                             width: 8,
                             height: 8,
                             margin: const EdgeInsets.symmetric(vertical: 2),
@@ -438,10 +491,14 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text("Deep Sleep",
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w300)),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(fontWeight: FontWeight.w300)),
                               Text(
                                   '${asleepMinutes ~/ 60}hr ${asleepMinutes.remainder(60).toInt()}min (${NumFormat.toPercentWithTotal(deepSleepMinutes, minutesInBed)})',
-                                  style: dataTextTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))
+                                  style: dataTextTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold))
                             ],
                           ),
                         ],
@@ -475,7 +532,8 @@ class PercentagePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Offset c = Offset(math.min(size.width, radius * 2) / 2, math.min(size.height, radius * 2) / 2);
+    final Offset c = Offset(math.min(size.width, radius * 2) / 2,
+        math.min(size.height, radius * 2) / 2);
     final Rect container = Rect.fromCircle(center: c, radius: radius);
 
     final total = awake + asleep + deepSleep;
@@ -486,14 +544,17 @@ class PercentagePainter extends CustomPainter {
       final awakeP = awake / total;
       final asleepP = asleep / total;
       final deepSleepP = deepSleep / total;
-      paintBackground(canvas, size, container, awakeColor, 0, math.pi * 2 * awakeP);
-      paintBackground(canvas, size, container, asleepColor, math.pi * 2 * awakeP, math.pi * 2 * asleepP);
       paintBackground(
-          canvas, size, container, deepSleepColor, math.pi * 2 * (awakeP + asleepP), math.pi * 2 * deepSleepP);
+          canvas, size, container, awakeColor, 0, math.pi * 2 * awakeP);
+      paintBackground(canvas, size, container, asleepColor,
+          math.pi * 2 * awakeP, math.pi * 2 * asleepP);
+      paintBackground(canvas, size, container, deepSleepColor,
+          math.pi * 2 * (awakeP + asleepP), math.pi * 2 * deepSleepP);
     }
   }
 
-  void paintBackground(Canvas canvas, Size size, Rect container, Color color, double startAngle, double endAngle) {
+  void paintBackground(Canvas canvas, Size size, Rect container, Color color,
+      double startAngle, double endAngle) {
     final paint = Paint()
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
@@ -504,5 +565,7 @@ class PercentagePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(PercentagePainter oldDelegate) =>
-      oldDelegate.awake != awake || oldDelegate.deepSleep != deepSleep || oldDelegate.asleep != asleep;
+      oldDelegate.awake != awake ||
+      oldDelegate.deepSleep != deepSleep ||
+      oldDelegate.asleep != asleep;
 }
