@@ -16,16 +16,18 @@ User createUser() {
   const sleepPlanDays = 10;
   return User(
     id: uuid.v4(),
-    name: 'Jennifer',
-    email: 'jennifer@email.com',
+    name: 'Ena',
+    email: 'ena@email.com',
     password: '12345678',
     sleepPlan: '1',
-    sleepPlanUpdatedAt: DateTime.now().subtract(const Duration(days: sleepPlanDays)),
+    sleepPlanUpdatedAt:
+        DateTime.now().subtract(const Duration(days: sleepPlanDays)),
   );
 }
 
 /// Returns list of sleep record
-List<SleepRecord> createRecords(DateTime start, DateTime end, [SleepPlan? plan]) {
+List<SleepRecord> createRecords(DateTime start, DateTime end,
+    [SleepPlan? plan]) {
   final now = DateTime.now();
   end = end.isAfter(now) ? now : end;
   assert(start.isBefore(end), 'start $start must be before end $end.');
@@ -49,11 +51,13 @@ List<SleepRecord> createRecords(DateTime start, DateTime end, [SleepPlan? plan])
     for (int i = 0; i < plan.sleepMinutes.length; i++) {
       int minutes = math.Random().nextInt(24 * 60 - 1);
       // add minutes based on plan.sleepMinutes
-      DateTime timestamp = DateUtils.dateOnly(start).add(Duration(minutes: minutes));
+      DateTime timestamp =
+          DateUtils.dateOnly(start).add(Duration(minutes: minutes));
       if (dayRes.isNotEmpty) {
         final last = dayRes.last;
         while (timestamp.isBefore(last.wakeUpAt ?? last.end)) {
-          timestamp = (last.wakeUpAt ?? last.end).add(Duration(minutes: minutes));
+          timestamp =
+              (last.wakeUpAt ?? last.end).add(Duration(minutes: minutes));
         }
         if (!timestamp.isBefore(next)) {
           break;
@@ -61,14 +65,17 @@ List<SleepRecord> createRecords(DateTime start, DateTime end, [SleepPlan? plan])
       }
 
       final int sleepMinutes = (plan.sleepMinutes[i]).toInt();
-      final int actualMinutes = (sleepMinutes * ((math.Random().nextInt(100) + 50) / 100)).toInt();
+      final int actualMinutes =
+          (sleepMinutes * ((math.Random().nextInt(100) + 50) / 100)).toInt();
       final wakeUpAt = timestamp.add(Duration(minutes: actualMinutes));
 
       final List<SleepEvent> logs = [];
       double sleepIndex = sleepIndex0;
 
       // Ideally, the backgroundFetch stores 30 seconds accelerometer's data per 15 minutes.
-      for (DateTime epoch = timestamp; epoch.isBefore(wakeUpAt); epoch = epoch.add(const Duration(minutes: 15))) {
+      for (DateTime epoch = timestamp;
+          epoch.isBefore(wakeUpAt);
+          epoch = epoch.add(const Duration(minutes: 15))) {
         for (int second = 0; second < 30; second++) {
           final isAwake = math.Random().nextDouble() < 0.2;
           double meanMagnitudeWithinSecond = math.Random().nextDouble() *

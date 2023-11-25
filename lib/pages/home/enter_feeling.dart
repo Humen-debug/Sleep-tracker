@@ -42,7 +42,7 @@ class _EnterFeelingPageState extends State<EnterFeelingPage> {
           firstChild: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('How Do You Feel Today?', style: Theme.of(context).textTheme.headlineSmall),
+              Text('How Do You Feel Right Now?', style: Theme.of(context).textTheme.headlineSmall),
               MoodPicker(
                 value: _value,
                 onChanged: (value) => setState(() => _value = value),

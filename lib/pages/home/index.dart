@@ -172,7 +172,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     titleText = 'Awaken Time';
                     mainButton = ElevatedButton(
                         onPressed: _setBedtime,
-                        child: const Text('Start to sleep'));
+                        child: const Text('Plan Bedtime'));
                     break;
                   case SleepStatus.goToBed:
                     titleText = 'Go To Bed';
