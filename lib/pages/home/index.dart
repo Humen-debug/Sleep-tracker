@@ -64,7 +64,8 @@ class _HomePageState extends ConsumerState<HomePage> {
       case SleepStatus.awaken:
         // if there is previous wake up time, start timer from it.
 
-        if (record?.wakeUpAt != null && (record?.wakeUpAt?.isBefore(_now) ?? false)) {
+        if (record?.wakeUpAt != null &&
+            (record?.wakeUpAt?.isBefore(_now) ?? false)) {
           _sleepTimerCont.start(startTime: record!.wakeUpAt!);
         }
         break;
@@ -84,7 +85,8 @@ class _HomePageState extends ConsumerState<HomePage> {
       final last = ref.read(authStateProvider).sleepRecords.first;
       initialRange = DateTimeRange(start: last.start, end: last.end);
     }
-    final DateTimeRange? range = await context.pushRoute<DateTimeRange?>(EnterBedtimeRoute(initialRange: initialRange));
+    final DateTimeRange? range = await context.pushRoute<DateTimeRange?>(
+        EnterBedtimeRoute(initialRange: initialRange));
     if (range == null) return;
 
     final DateTime now = DateTime.now();
@@ -102,11 +104,19 @@ class _HomePageState extends ConsumerState<HomePage> {
     try {
       if (sleepStatus != SleepStatus.awaken) {
         // Edit the latest sleep record, if the user hasn't slept yet or is sleeping.
-        await ref.read(authStateProvider.notifier).updateSleepRecord(range: range);
+        await ref
+            .read(authStateProvider.notifier)
+            .updateSleepRecord(range: range);
       } else {
-        await ref.read(authStateProvider.notifier).createSleepRecord(range: range);
+        await ref
+            .read(authStateProvider.notifier)
+            .createSleepRecord(range: range);
       }
-      _sleepTimerCont.start(startTime: start, endTime: end, nextStart: nextStart, nextEnd: nextEnd);
+      _sleepTimerCont.start(
+          startTime: start,
+          endTime: end,
+          nextStart: nextStart,
+          nextEnd: nextEnd);
     } catch (e, s) {
       AppLogger.I.e('Setup Bedtime Error', error: e, stackTrace: s);
     }
@@ -115,23 +125,30 @@ class _HomePageState extends ConsumerState<HomePage> {
   Future<void> _wakeUp() async {
     final DateTime now = DateTime.now();
     _sleepTimerCont.start(startTime: now);
-    final double? sleepQuality = await context.pushRoute(const EnterFeelingRoute());
-    await ref.read(authStateProvider.notifier).updateSleepRecord(wakeUpAt: now, sleepQuality: sleepQuality);
+    final double? sleepQuality =
+        await context.pushRoute(const EnterFeelingRoute());
+    await ref
+        .read(authStateProvider.notifier)
+        .updateSleepRecord(wakeUpAt: now, sleepQuality: sleepQuality);
   }
 
   Future<void> _snooze() async {}
 
   void _handleMoodChanged(double? value) async {
-    await ref.read(authStateProvider.notifier).updateSleepRecord(sleepQuality: value);
+    await ref
+        .read(authStateProvider.notifier)
+        .updateSleepRecord(sleepQuality: value);
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authStateProvider);
-    final DateTime firstDate = (auth.sleepRecords.lastOrNull?.start ?? _now).copyWith(day: 1);
+    final DateTime firstDate =
+        (auth.sleepRecords.lastOrNull?.start ?? _now).copyWith(day: 1);
 
     Widget divider = Padding(
-      padding: const EdgeInsets.only(top: Style.spacingXxl, bottom: Style.spacingLg),
+      padding:
+          const EdgeInsets.only(top: Style.spacingXxl, bottom: Style.spacingLg),
       child: Divider(color: Theme.of(context).colorScheme.tertiary),
     );
 
@@ -153,7 +170,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                 switch (auth.sleepStatus) {
                   case SleepStatus.awaken:
                     titleText = 'Awaken Time';
-                    mainButton = ElevatedButton(onPressed: _setBedtime, child: const Text('Start to sleep'));
+                    mainButton = ElevatedButton(
+                        onPressed: _setBedtime,
+                        child: const Text('Start to sleep'));
                     break;
                   case SleepStatus.goToBed:
                     titleText = 'Go To Bed';
@@ -162,41 +181,57 @@ class _HomePageState extends ConsumerState<HomePage> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('BEDTIME - ${DateFormat.Hm().format(auth.sleepRecords.first.start)}'),
+                            Text(
+                                'BEDTIME - ${DateFormat.Hm().format(auth.sleepRecords.first.start)}'),
                             const SizedBox(width: Style.radiusXs),
-                            SvgPicture.asset('assets/icons/edit.svg', color: Theme.of(context).primaryColor)
+                            SvgPicture.asset('assets/icons/edit.svg',
+                                color: Theme.of(context).primaryColor)
                           ],
                         ));
                     break;
                   case SleepStatus.sleeping:
                     titleText = 'Sleeping Time';
-                    mainButton = ElevatedButton(onPressed: _wakeUp, child: const Text('Wake up'));
-                    if (auth.sleepRecords.firstOrNull?.end.isBefore(DateTime.now()) ?? false) {
-                      secondaryButton = OutlinedButton(onPressed: _snooze, child: const Text('Snooze for 5 minutes'));
+                    mainButton = ElevatedButton(
+                        onPressed: _wakeUp, child: const Text('Wake up'));
+                    if (auth.sleepRecords.firstOrNull?.end
+                            .isBefore(DateTime.now()) ??
+                        false) {
+                      secondaryButton = OutlinedButton(
+                          onPressed: _snooze,
+                          child: const Text('Snooze for 5 minutes'));
                     }
                     break;
                 }
                 final Color primaryColor = Theme.of(context).primaryColor;
-                const BoxConstraints columnConstraints = BoxConstraints(maxWidth: 263, minWidth: 220);
+                const BoxConstraints columnConstraints =
+                    BoxConstraints(maxWidth: 263, minWidth: 220);
                 const double iconSize = 16.0;
 
                 return Column(mainAxisSize: MainAxisSize.min, children: [
                   Text(
                     titleText,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   // Timer
                   if (child != null)
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: Style.spacingSm),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: Style.spacingSm),
                       child: child,
                     ),
                   const SizedBox(height: Style.spacingXxl),
-                  ConstrainedBox(constraints: const BoxConstraints(minWidth: _buttonMinimumWidth), child: mainButton),
+                  ConstrainedBox(
+                      constraints:
+                          const BoxConstraints(minWidth: _buttonMinimumWidth),
+                      child: mainButton),
                   if (secondaryButton != null)
                     Container(
-                      constraints: const BoxConstraints(minWidth: _buttonMinimumWidth),
+                      constraints:
+                          const BoxConstraints(minWidth: _buttonMinimumWidth),
                       margin: const EdgeInsets.only(top: Style.spacingSm),
                       child: secondaryButton,
                     ),
@@ -211,10 +246,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             SvgPicture.asset('assets/icons/alarm.svg',
-                                color: primaryColor, height: iconSize, width: iconSize),
+                                color: primaryColor,
+                                height: iconSize,
+                                width: iconSize),
                             Text(
                               'Alarm',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: primaryColor),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(color: primaryColor),
                             )
                           ],
                         ),
@@ -236,8 +276,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                             left: iconSize / 2,
                             child: Align(
                               alignment: AlignmentDirectional.centerStart,
-                              child:
-                                  DashedLine(size: const Size(1, 16), dashWidth: 4, dashSpace: 2, color: primaryColor),
+                              child: DashedLine(
+                                  size: const Size(1, 16),
+                                  dashWidth: 4,
+                                  dashSpace: 2,
+                                  color: primaryColor),
                             ),
                           ),
                           Column(
@@ -246,22 +289,32 @@ class _HomePageState extends ConsumerState<HomePage> {
                               Row(
                                 children: [
                                   SvgPicture.asset('assets/icons/zzz.svg',
-                                      color: primaryColor, width: iconSize, height: iconSize),
+                                      color: primaryColor,
+                                      width: iconSize,
+                                      height: iconSize),
                                   const SizedBox(width: Style.spacingXxs),
-                                  Text('Went to Bed', style: TextStyle(color: primaryColor)),
+                                  Text('Went to Bed',
+                                      style: TextStyle(color: primaryColor)),
                                   Expanded(
                                     child: TextButton(
                                       onPressed: _setBedtime,
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
                                         children: [
                                           Text(
-                                            DateFormat.jm().format(auth.sleepRecords.first.start),
-                                            style: dataTextTheme.bodyMedium?.copyWith(color: Style.grey1),
+                                            DateFormat.jm().format(
+                                                auth.sleepRecords.first.start),
+                                            style: dataTextTheme.bodyMedium
+                                                ?.copyWith(color: Style.grey1),
                                           ),
-                                          const SizedBox(width: Style.spacingXxs),
-                                          SvgPicture.asset('assets/icons/edit.svg',
-                                              color: Style.grey1, width: 12.0, height: 12.0)
+                                          const SizedBox(
+                                              width: Style.spacingXxs),
+                                          SvgPicture.asset(
+                                              'assets/icons/edit.svg',
+                                              color: Style.grey1,
+                                              width: 12.0,
+                                              height: 12.0)
                                         ],
                                       ),
                                     ),
@@ -272,22 +325,32 @@ class _HomePageState extends ConsumerState<HomePage> {
                               Row(
                                 children: [
                                   SvgPicture.asset('assets/icons/clock.svg',
-                                      color: primaryColor, width: iconSize, height: iconSize),
+                                      color: primaryColor,
+                                      width: iconSize,
+                                      height: iconSize),
                                   const SizedBox(width: Style.spacingXxs),
-                                  Text('Wake up', style: TextStyle(color: primaryColor)),
+                                  Text('Wake up',
+                                      style: TextStyle(color: primaryColor)),
                                   Expanded(
                                     child: TextButton(
                                       onPressed: _setBedtime,
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
                                         children: [
                                           Text(
-                                            DateFormat.jm().format(auth.sleepRecords.first.end),
-                                            style: dataTextTheme.bodyMedium?.copyWith(color: Style.grey1),
+                                            DateFormat.jm().format(
+                                                auth.sleepRecords.first.end),
+                                            style: dataTextTheme.bodyMedium
+                                                ?.copyWith(color: Style.grey1),
                                           ),
-                                          const SizedBox(width: Style.spacingXxs),
-                                          SvgPicture.asset('assets/icons/edit.svg',
-                                              color: Style.grey1, width: 12.0, height: 12.0)
+                                          const SizedBox(
+                                              width: Style.spacingXxs),
+                                          SvgPicture.asset(
+                                              'assets/icons/edit.svg',
+                                              color: Style.grey1,
+                                              width: 12.0,
+                                              height: 12.0)
                                         ],
                                       ),
                                     ),
@@ -315,7 +378,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _TodayMoodBoard(
-                        initialValue: auth.sleepRecords.firstOrNull?.sleepQuality,
+                        initialValue:
+                            auth.sleepRecords.firstOrNull?.sleepQuality,
                         onChanged: _handleMoodChanged,
                       ),
                       if (child != null) child
@@ -347,7 +411,8 @@ class _ProfileStatusBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final User? user = ref.watch(authStateProvider).user;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingMd),
+      padding: const EdgeInsets.symmetric(
+          vertical: Style.spacingXs, horizontal: Style.spacingMd),
       child: Row(
         children: [
           const CircleAvatar(backgroundColor: Style.grey3, maxRadius: 24),
@@ -359,7 +424,10 @@ class _ProfileStatusBar extends ConsumerWidget {
               children: [
                 Text(
                   'Welcome Back, ${user?.name}',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w500),
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w500),
                 ),
                 Text(
                   DateFormat.yMMMEd().format(DateTime.now()),
@@ -403,7 +471,10 @@ class __TodayMoodBoardState extends State<_TodayMoodBoard> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(onFocused ? 'How Are You Today?' : 'Today Mood',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w600)),
         if (!onFocused)
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 100),
@@ -413,23 +484,27 @@ class __TodayMoodBoardState extends State<_TodayMoodBoard> {
                     backgroundColor: MaterialStateProperty.resolveWith<Color>(
                       (states) {
                         if (states.contains(MaterialState.disabled)) {
-                          return Theme.of(context).colorScheme.tertiary.withOpacity(0.5);
+                          return Theme.of(context)
+                              .colorScheme
+                              .tertiary
+                              .withOpacity(0.5);
                         }
                         return Theme.of(context).colorScheme.tertiary;
                       },
                     ),
                     padding: const MaterialStatePropertyAll(
-                        EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingSm)),
+                        EdgeInsets.symmetric(
+                            vertical: Style.spacingXs,
+                            horizontal: Style.spacingSm)),
                   ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'Reset',
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelLarge
-                        ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(width: Style.spacingXxs),
                   SvgPicture.asset(
@@ -445,7 +520,8 @@ class __TodayMoodBoardState extends State<_TodayMoodBoard> {
       ],
     );
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Style.spacingMd, 0, Style.spacingMd, Style.spacingXs),
+      padding: const EdgeInsets.fromLTRB(
+          Style.spacingMd, 0, Style.spacingMd, Style.spacingXs),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -455,7 +531,8 @@ class __TodayMoodBoardState extends State<_TodayMoodBoard> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const SizedBox(height: Style.spacingSm),
-                    SvgPicture.asset('assets/moods/${mood?.name}.svg', height: 85),
+                    SvgPicture.asset('assets/moods/${mood?.name}.svg',
+                        height: 85),
                     const SizedBox(height: Style.spacingXs),
                     Text(
                       mood?.name.capitalize() ?? '',
@@ -465,7 +542,7 @@ class __TodayMoodBoardState extends State<_TodayMoodBoard> {
                 )
               : MoodPicker(
                   value: _value,
-                  onChanged: _handleChanged,
+                  onChanged: (v) => setState(() => _handleChanged(v)),
                   onSlide: (v) => setState(() => isSliding = v),
                 )
         ],
@@ -505,7 +582,8 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
     final Iterable<SleepRecord> dayRecords = getDayRecords(index);
     final DateTime now = DateTime.now();
 
-    final double totalSleepSeconds = dayRecords.fold(0.0, (previousValue, record) {
+    final double totalSleepSeconds =
+        dayRecords.fold(0.0, (previousValue, record) {
       final DateTime? wakeUpAt = record.wakeUpAt;
       final DateTime start = record.start;
       DateTime end = record.end;
@@ -534,10 +612,16 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
                 DateFormat.E().format(day).substring(0, 1),
                 style: themeData.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: isSelected ? themeData.colorScheme.onSurface : themeData.colorScheme.secondary),
+                    color: isSelected
+                        ? themeData.colorScheme.onSurface
+                        : themeData.colorScheme.secondary),
               ),
             ),
-            TimerPaint(progress: progress, radius: 16.0, strokeWidth: 8, showIndicator: false),
+            TimerPaint(
+                progress: progress,
+                radius: 16.0,
+                strokeWidth: 8,
+                showIndicator: false),
           ],
         ),
       ),
@@ -566,15 +650,17 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
 
       /// Returns sleep events for every record. Only return event per 30 minutes so that the
       /// line chart is not packed with data.
-      final Iterable<SleepEvent> sleepEvents = records.expand((record) => record.events);
+      final Iterable<SleepEvent> sleepEvents =
+          records.expand((record) => record.events);
       for (start; true; start = start.add(interval)) {
         if (start.isAfter(end)) break;
         final events = sleepEvents
             .skipWhile((event) => event.time.isBefore(start))
             .takeWhile((event) => !event.time.isAfter(start.add(interval)));
 
-        SleepType type =
-            sleepEvents.any((event) => !start.isBefore(event.time)) ? SleepType.deepSleep : SleepType.awaken;
+        SleepType type = sleepEvents.any((event) => !start.isBefore(event.time))
+            ? SleepType.deepSleep
+            : SleepType.awaken;
         double meanType = type.value.toDouble();
 
         if (events.isNotEmpty) {
@@ -594,7 +680,8 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
       for (int i = 0; i < sleepEvents.length - 1; i++) {
         final log = sleepEvents[i];
         final nextLog = sleepEvents[i + 1];
-        final time = nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
+        final time =
+            nextLog.time.difference(log.time).inMilliseconds / (60 * 1000);
         // According to our sleep-wake classification algorithm, type is divided into
         // SleepType.awaken and SleepType.deepSleep;
         if (log.type == SleepType.awaken) {
@@ -606,7 +693,11 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
 
       if (sleepEvents.isNotEmpty) {
         final last = sleepEvents.last;
-        final time = ((record.wakeUpAt ?? record.end).difference(last.time).inMilliseconds).abs() / (60 * 1000);
+        final time = ((record.wakeUpAt ?? record.end)
+                    .difference(last.time)
+                    .inMilliseconds)
+                .abs() /
+            (60 * 1000);
         if (last.type == SleepType.deepSleep) {
           deepSleepMinutes += time;
         }
@@ -614,7 +705,11 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
     }
     double minutesInBed = records
         .where((record) => record.wakeUpAt != null)
-        .fold(0.0, (previousValue, record) => previousValue + record.wakeUpAt!.difference(record.start).inMinutes);
+        .fold(
+            0.0,
+            (previousValue, record) =>
+                previousValue +
+                record.wakeUpAt!.difference(record.start).inMinutes);
 
     double sleepMinutes = minutesInBed - awakenMinutes - deepSleepMinutes;
     double asleepMinutes = minutesInBed - awakenMinutes;
@@ -627,35 +722,43 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Sleep Cycle', style: Theme.of(context).textTheme.headlineSmall),
+              Text('Sleep Cycle',
+                  style: Theme.of(context).textTheme.headlineSmall),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 100),
                 child: ElevatedButton(
                   onPressed: () => context.pushRoute(const SleepCycleRoute()),
                   style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
-                        backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                        backgroundColor:
+                            MaterialStateProperty.resolveWith<Color>(
                           (states) {
                             if (states.contains(MaterialState.disabled)) {
-                              return Theme.of(context).colorScheme.tertiary.withOpacity(0.5);
+                              return Theme.of(context)
+                                  .colorScheme
+                                  .tertiary
+                                  .withOpacity(0.5);
                             }
                             return Theme.of(context).colorScheme.tertiary;
                           },
                         ),
                         padding: const MaterialStatePropertyAll(
-                            EdgeInsets.symmetric(vertical: Style.spacingXs, horizontal: Style.spacingSm)),
+                            EdgeInsets.symmetric(
+                                vertical: Style.spacingXs,
+                                horizontal: Style.spacingSm)),
                       ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         'More',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelLarge
-                            ?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold),
                       ),
                       SvgPicture.asset('assets/icons/chevron-right.svg',
-                          color: Theme.of(context).primaryColor, width: 32, height: 32)
+                          color: Theme.of(context).primaryColor,
+                          width: 32,
+                          height: 32)
                     ],
                   ),
                 ),
@@ -672,7 +775,8 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
             data: sleepEventType,
             getSpot: (x, y) {
               final int min = earliest?.millisecondsSinceEpoch ?? 0;
-              return Point((x.millisecondsSinceEpoch - min).toDouble(), y.toDouble());
+              return Point(
+                  (x.millisecondsSinceEpoch - min).toDouble(), y.toDouble());
             },
             gradientColors: [
               Theme.of(context).primaryColor.withOpacity(0.8),
@@ -693,12 +797,16 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
             getXTitles: (value) {
               // value here is the difference of millisecondSinceEpoch between earliest and data.
               // Restore and return the millisecondSinceEpoch of data.
-              final int milliSecond = value.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
-              return DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
+              final int milliSecond =
+                  value.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
+              return DateFormat.Hm()
+                  .format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
             },
             getTooltipLabels: (x, y) {
-              final int milliSecond = x.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
-              final String time = DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
+              final int milliSecond =
+                  x.toInt() + (earliest?.millisecondsSinceEpoch ?? 0);
+              final String time = DateFormat.Hm()
+                  .format(DateTime.fromMillisecondsSinceEpoch(milliSecond));
               int index = y.round();
               if (index >= 9) {
                 return '$time, Awake';
@@ -743,7 +851,8 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
           // ),
           if (records.isNotEmpty) ...[
             Padding(
-              padding: const EdgeInsets.fromLTRB(Style.spacingMd, Style.spacingXs, Style.spacingMd, Style.spacingMd),
+              padding: const EdgeInsets.fromLTRB(Style.spacingMd,
+                  Style.spacingXs, Style.spacingMd, Style.spacingMd),
               child: Row(
                 children: [
                   Expanded(
@@ -753,9 +862,13 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
                       children: [
                         Text(
                           '${DateFormat.jm().format(records.first.start)} - ${DateFormat.jm().format(records.last.wakeUpAt ?? records.last.end)}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Style.grey3),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: Style.grey3),
                         ),
-                        Text('${asleepMinutes ~/ 60}hr ${asleepMinutes.remainder(60).toInt()}min asleep',
+                        Text(
+                            '${asleepMinutes ~/ 60}hr ${asleepMinutes.remainder(60).toInt()}min asleep',
                             style: dataTextTheme.bodyMedium)
                       ],
                     ),
@@ -767,12 +880,17 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
                     children: [
                       Text(
                         'Sleep Efficiency',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Style.grey3),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: Style.grey3),
                         textAlign: TextAlign.end,
                       ),
                       Text(
-                        NumFormat.toPercentWithTotal(asleepMinutes, minutesInBed),
-                        style: dataTextTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                        NumFormat.toPercentWithTotal(
+                            asleepMinutes, minutesInBed),
+                        style: dataTextTheme.bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
                         textAlign: TextAlign.end,
                       )
                     ],
@@ -788,15 +906,18 @@ class _SleepCycleChartState extends ConsumerState<_SleepCycleChart> {
                   SleepPhaseBlock(
                       color: Style.highlightGold,
                       title: 'Awake',
-                      desc: NumFormat.toPercentWithTotal(awakenMinutes, minutesInBed)),
+                      desc: NumFormat.toPercentWithTotal(
+                          awakenMinutes, minutesInBed)),
                   SleepPhaseBlock(
                       color: Theme.of(context).primaryColor,
                       title: 'Sleep',
-                      desc: NumFormat.toPercentWithTotal(sleepMinutes, minutesInBed)),
+                      desc: NumFormat.toPercentWithTotal(
+                          sleepMinutes, minutesInBed)),
                   SleepPhaseBlock(
                       color: Style.highlightPurple,
                       title: 'Deep Sleep',
-                      desc: NumFormat.toPercentWithTotal(deepSleepMinutes, minutesInBed)),
+                      desc: NumFormat.toPercentWithTotal(
+                          deepSleepMinutes, minutesInBed)),
                 ],
               ),
             ),

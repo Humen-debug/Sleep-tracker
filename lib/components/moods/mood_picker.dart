@@ -7,7 +7,8 @@ import 'package:sleep_tracker/utils/num.dart';
 import 'package:sleep_tracker/utils/style.dart';
 
 class MoodPicker extends StatelessWidget {
-  const MoodPicker({super.key, required this.value, required this.onChanged, this.onSlide});
+  const MoodPicker(
+      {super.key, required this.value, required this.onChanged, this.onSlide});
   final double? value;
   final ValueChanged<double?> onChanged;
   final ValueChanged<bool>? onSlide;
@@ -15,7 +16,7 @@ class MoodPicker extends StatelessWidget {
   int? get _activeIndex => value != null ? value! ~/ 0.2 : null;
 
   void _handleIndexPressed(int i) {
-    onChanged(i * 0.2);
+    onChanged((i + 1) * 0.2);
   }
 
   void _handleChanged(double value) {
@@ -48,7 +49,8 @@ class MoodPicker extends StatelessWidget {
                         scale: _activeIndex == i ? 2 : 1,
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.bounceInOut,
-                        child: SvgPicture.asset('assets/moods/${mood.name}.svg'))));
+                        child: SvgPicture.asset(
+                            'assets/moods/${mood.name}.svg'))));
           }).toList(),
         ),
         const SizedBox(height: Style.spacingMd),
