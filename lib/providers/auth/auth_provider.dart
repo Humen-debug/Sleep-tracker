@@ -13,7 +13,8 @@ import 'package:sleep_tracker/utils/background/background_state.dart';
 import 'package:sleep_tracker/utils/demo_user.dart';
 import 'package:uuid/uuid.dart';
 
-Stream<DateTime> getPeriodicStream([Duration interval = const Duration(seconds: 1)]) async* {
+Stream<DateTime> getPeriodicStream(
+    [Duration interval = const Duration(seconds: 1)]) async* {
   yield* Stream.periodic(interval, (_) {
     return DateTime.now();
   }).asyncMap((event) async => event);
@@ -45,7 +46,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = s;
       return true;
     } catch (e, s) {
-      AppLogger.I.e('Error restoring AuthState from SecureStorage', error: e, stackTrace: s);
+      AppLogger.I.e('Error restoring AuthState from SecureStorage',
+          error: e, stackTrace: s);
 
       return false;
     }
@@ -98,14 +100,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
       SleepRecord? record = state.sleepRecords.firstOrNull;
 
       // if there is no record, or the latest record has been already completed
-      if (record == null || (record.wakeUpAt != null && record.wakeUpAt!.isBefore(DateTime.now()))) return true;
+      if (record == null ||
+          (record.wakeUpAt != null &&
+              record.wakeUpAt!.isBefore(DateTime.now()))) return true;
 
       DateTime first = record.start;
       double meanMagnitudeWithinSecond = 0.0;
       int count = 0;
       // dev
       int total = 0;
-      final newEvents = BackgroundEvents.from(background.events)..removeWhere((key, value) => key.isBefore(first));
+      final newEvents = BackgroundEvents.from(background.events)
+        ..removeWhere((key, value) => key.isBefore(first));
       if (newEvents.isEmpty) return true;
       DateTime next = first.add(const Duration(seconds: 1));
       for (final entry in newEvents.entries) {
@@ -114,17 +119,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
         count++;
         total++;
         if (!timestamp.isAfter(next)) {
-          meanMagnitudeWithinSecond = (meanMagnitudeWithinSecond * (count - 1) + magnitude) / count;
+          meanMagnitudeWithinSecond =
+              (meanMagnitudeWithinSecond * (count - 1) + magnitude) / count;
         } else {
           // Insert sleep event per seconds
-          final int index = record!.events.indexWhere((event) => !event.time.isBefore(timestamp));
+          final int index = record!.events
+              .indexWhere((event) => !event.time.isBefore(timestamp));
           if (index > 0) {
             double sleepIndex = record.events[index].intensity;
-            sleepIndex = sleepIndexFormula(sleepIndex, meanMagnitudeWithinSecond);
-            List<SleepEvent> recordEvents = List<SleepEvent>.from(record.events);
-            recordEvents.insert(index, SleepEvent(intensity: sleepIndex, time: timestamp));
+            sleepIndex =
+                sleepIndexFormula(sleepIndex, meanMagnitudeWithinSecond);
+            List<SleepEvent> recordEvents =
+                List<SleepEvent>.from(record.events);
+            recordEvents.insert(
+                index, SleepEvent(intensity: sleepIndex, time: timestamp));
             record = record.copyWith(events: recordEvents);
-            state = state.copyWith(sleepRecords: [record, ...state.sleepRecords.sublist(1)]);
+            state = state.copyWith(
+                sleepRecords: [record, ...state.sleepRecords.sublist(1)]);
           }
           next = next.add(const Duration(seconds: 1));
           count = 0;
@@ -135,7 +146,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
           'AuthState inserted $total events from BackgroundState between ${newEvents.keys.first} and ${newEvents.keys.last}.');
       return true;
     } catch (e, s) {
-      AppLogger.I.e('Error restoring BackgroundState from BackgroundController', error: e, stackTrace: s);
+      AppLogger.I.e('Error restoring BackgroundState from BackgroundController',
+          error: e, stackTrace: s);
       return false;
     }
   }
@@ -161,18 +173,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
       (event) async {
         final DateTime now = DateTime.now();
         count++;
-        final double magnitude =
-            math.max(math.sqrt(math.pow(event.x, 2) + math.pow(event.y, 2) + math.pow(event.z, 2)) - 1, 0.0);
+        final double magnitude = math.max(
+            math.sqrt(math.pow(event.x, 2) +
+                    math.pow(event.y, 2) +
+                    math.pow(event.z, 2)) -
+                1,
+            0.0);
         final DateTime next = first.add(const Duration(seconds: 1));
         if (!now.isAfter(next)) {
-          meanMagnitudeWithinSecond = (meanMagnitudeWithinSecond * (count - 1) + magnitude) / count;
+          meanMagnitudeWithinSecond =
+              (meanMagnitudeWithinSecond * (count - 1) + magnitude) / count;
         } else {
           // Store sleep event logs per second
           if (state.sleepStatus == SleepStatus.sleeping) {
             SleepRecord record = state.sleepRecords.first;
-            sleepIndex = sleepIndexFormula(sleepIndex, meanMagnitudeWithinSecond);
-            record = record.copyWith(events: [...record.events, SleepEvent(intensity: sleepIndex, time: now)]);
-            state = state.copyWith(sleepRecords: [record, ...state.sleepRecords.sublist(1)]);
+            sleepIndex =
+                sleepIndexFormula(sleepIndex, meanMagnitudeWithinSecond);
+            record = record.copyWith(events: [
+              ...record.events,
+              SleepEvent(intensity: sleepIndex, time: now)
+            ]);
+            state = state.copyWith(
+                sleepRecords: [record, ...state.sleepRecords.sublist(1)]);
             await state.localSave();
           }
           first = next;
@@ -199,7 +221,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
           break;
         case SleepStatus.awaken:
         case SleepStatus.goToBed:
-          if (!_accelerometerSubscription!.isPaused) _accelerometerSubscription!.pause();
+          if (!_accelerometerSubscription!.isPaused)
+            _accelerometerSubscription!.pause();
           break;
       }
     });
@@ -222,14 +245,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<List<SleepRecord>> syncSleepRecords() async {
     final DateTime yesterday = DateTime.now().subtract(const Duration(days: 1));
 
-    final res = createRecords(yesterday.subtract(const Duration(days: 180)), yesterday);
+    final res =
+        createRecords(yesterday.subtract(const Duration(days: 2)), yesterday);
     state = state.copyWith(sleepRecords: res);
     await state.localSave();
     return res;
   }
 
   Future<void> createSleepRecord({required DateTimeRange range}) async {
-    assert(range.end.isAfter(DateTime.now()), 'range.end ${range.end} must be after now ${DateTime.now()}');
+    assert(range.end.isAfter(DateTime.now()),
+        'range.end ${range.end} must be after now ${DateTime.now()}');
     final String id = uuid.v4();
     // todo: create record in graphql server for new ID;
     final record = SleepRecord(id: id, start: range.start, end: range.end);
@@ -238,16 +263,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   /// Update the latest record in list.
-  Future<void> updateSleepRecord({DateTimeRange? range, double? sleepQuality, DateTime? wakeUpAt}) async {
+  Future<void> updateSleepRecord(
+      {DateTimeRange? range, double? sleepQuality, DateTime? wakeUpAt}) async {
     assert(range == null || range.end.isAfter(DateTime.now()),
         'range.end ${range.end} must be after now ${DateTime.now()}');
     if (state.sleepRecords.isNotEmpty) {
-      SleepRecord newRecord = state.sleepRecords.first.copyWith(sleepQuality: sleepQuality);
+      SleepRecord newRecord =
+          state.sleepRecords.first.copyWith(sleepQuality: sleepQuality);
 
-      if (range != null) newRecord = newRecord.copyWith(start: range.start, end: range.end);
+      if (range != null)
+        newRecord = newRecord.copyWith(start: range.start, end: range.end);
       if (wakeUpAt != null) newRecord = newRecord.copyWith(wakeUpAt: wakeUpAt);
 
-      state = state.copyWith(sleepRecords: [newRecord, ...state.sleepRecords.sublist(1)]);
+      state = state.copyWith(
+          sleepRecords: [newRecord, ...state.sleepRecords.sublist(1)]);
       await state.localSave();
     }
   }

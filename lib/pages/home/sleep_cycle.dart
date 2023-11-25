@@ -237,6 +237,8 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            periodPicker,
+            const SizedBox(height: Style.spacingMd),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(
@@ -252,8 +254,6 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(DateTime.daysPerWeek, _buildWeekdayButton),
             ),
-            const SizedBox(height: Style.spacingMd),
-            periodPicker,
             const SizedBox(height: Style.spacingMd),
             LineChart<DateTime, num>(
               data: sleepEventType,
