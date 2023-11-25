@@ -244,7 +244,7 @@ class _SleepCyclePageState extends ConsumerState<SleepCyclePage> {
                   (index) => Container(
                         width: 40,
                         alignment: Alignment.center,
-                        child: Text(DateFormat.d().format(DateUtils.addDaysToDate(selectedRange.start, index))),
+                        child: Text('${selectedRange.start.add(Duration(days: index)).day}'),
                       )),
             ),
             const SizedBox(height: Style.spacingXs),
