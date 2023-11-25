@@ -133,7 +133,7 @@ class SleepTimerController extends ChangeNotifier {
       _endTime = null;
       _nextStart = null;
       _nextEnd = null;
-      _displayMode = SleepTimerDisplayMode.elapsed;
+      // _displayMode = SleepTimerDisplayMode.elapsed;
       notifyListeners();
     }
   }

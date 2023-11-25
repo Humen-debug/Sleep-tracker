@@ -43,7 +43,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   bool alarmOn = true;
 
   final DateTime _now = DateTime.now();
-  late final SleepTimerController _sleepTimerCont = SleepTimerController();
+  late final SleepTimerController _sleepTimerCont = SleepTimerController(displayMode: SleepTimerDisplayMode.remained);
 
   @override
   void initState() {
